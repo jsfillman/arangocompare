@@ -37,10 +37,7 @@ jobs:
         ports:
           - 8529:8529
         options: >-
-          --health-cmd="curl -f http://localhost:8529/_api/version || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
+          --entrypoint /bin/sh
         env:
           ARANGO_ROOT_PASSWORD: testpassword
 
@@ -58,16 +55,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Start ArangoDB
+        run: |
+          docker-compose -f docker-compose.yml up -d
+
       - name: Wait for ArangoDB to be ready
         run: |
           echo "Waiting for ArangoDB to be ready..."
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -f http://localhost:8529/_api/version; then
               echo "ArangoDB is ready!"
               break
             fi
             echo "Waiting for ArangoDB to be ready... attempt $i"
-            sleep 10
+            sleep 5
           done
 
       - name: Set environment variables
@@ -96,4 +97,3 @@ jobs:
       - name: Run Docker container
         run: |
           docker run --rm arango_compare
-
