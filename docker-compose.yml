@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   arangodb:
-    image: arangodb:latest
+    image: arangodb:3.11.8
     ports:
       - "8529:8529"
     environment:
