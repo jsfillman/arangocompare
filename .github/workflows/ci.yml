@@ -96,3 +96,4 @@ jobs:
       - name: Run Docker container
         run: |
           docker run --rm arango_compare
+
