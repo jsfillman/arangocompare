@@ -8,7 +8,7 @@ services:
     environment:
       ARANGO_ROOT_PASSWORD: "testpassword"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8529/_db/_system/_admin/aardvark/index.html"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      test: ["CMD-SHELL", "curl -f http://localhost:8529/_api/version || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
