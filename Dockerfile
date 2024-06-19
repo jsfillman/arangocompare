@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY arango_compare.py .
 
 # Set environment variables
+ENV ENV=development
 ENV ARANGO_URL1=http://arangodb:8529
 ENV ARANGO_USERNAME1=root
 ENV ARANGO_PASSWORD1=testpassword
