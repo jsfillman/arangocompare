@@ -1,6 +1,6 @@
 # ArangoCompare
 
-A tool to compare collections in ArangoDB instances.
+A tool to compare data in ArangoDB instances.
 
 ## Requirements
 
