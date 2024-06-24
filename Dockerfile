@@ -1,5 +1,5 @@
 # Use the smallest possible base image that can run Python
-FROM python:3.9-slim
+FROM python:3.9.19-alpine3.20
 
 # Set the working directory
 WORKDIR /app
