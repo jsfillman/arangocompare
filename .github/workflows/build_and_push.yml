@@ -52,7 +52,7 @@ jobs:
           file: ./Dockerfile
           pull: true
           push: true
-          platforms: linux/amd64,linux/arm64,linux/v8
+          platforms: linux/amd64,linux/arm64/v8
           build-args: |
             BUILD_DATE=${{ steps.date.outputs.date }}
             VCS_REF=${{ github.sha }}
