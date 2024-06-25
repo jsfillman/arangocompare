@@ -18,14 +18,24 @@ def mock_env():
     }):
         yield
 
+
 @patch("requests.get")
 def test_get_collections(mock_get, mock_env):
-    mock_response = MagicMock()
-    mock_response.json.return_value = {
-        "result": [{"name": "test_collection1"}, {"name": "test_collection2"}]
+    mock_response_page1 = MagicMock()
+    mock_response_page1.json.return_value = {
+        "result": [{"name": "test_collection1"}, {"name": "test_collection2"}],
+        "hasMore": True
     }
-    mock_response.raise_for_status = MagicMock()
-    mock_get.return_value = mock_response
+    mock_response_page1.raise_for_status = MagicMock()
+
+    mock_response_page2 = MagicMock()
+    mock_response_page2.json.return_value = {
+        "result": [{"name": "test_collection3"}],
+        "hasMore": False
+    }
+    mock_response_page2.raise_for_status = MagicMock()
+
+    mock_get.side_effect = [mock_response_page1, mock_response_page2]
 
     client = ArangoDBClient(
         url=os.getenv("ARANGO_URL1"),
@@ -35,9 +45,10 @@ def test_get_collections(mock_get, mock_env):
     )
 
     collections = client.get_collections()
-    assert len(collections) == 2
+    assert len(collections) == 3
     assert collections[0]["name"] == "test_collection1"
     assert collections[1]["name"] == "test_collection2"
+    assert collections[2]["name"] == "test_collection3"
 
 @patch("requests.get")
 def test_get_collection_details(mock_get, mock_env):
