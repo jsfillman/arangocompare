@@ -1,15 +1,19 @@
 import os
 import pytest
 from unittest.mock import patch, MagicMock
-from arango_compare import ArangoDBClient, main
+from arango_compare import ArangoDBClient, main, compare_collections
 
 @pytest.fixture
 def mock_env():
     with patch.dict(os.environ, {
-        "ARANGO_URL1": "http://mockserver:8529",
-        "ARANGO_USERNAME1": "testuser",
-        "ARANGO_PASSWORD1": "testpass",
-        "ARANGO_DB_NAME1": "testdb",
+        "ARANGO_URL1": "http://mockserver1:8529",
+        "ARANGO_USERNAME1": "testuser1",
+        "ARANGO_PASSWORD1": "testpass1",
+        "ARANGO_DB_NAME1": "testdb1",
+        "ARANGO_URL2": "http://mockserver2:8529",
+        "ARANGO_USERNAME2": "testuser2",
+        "ARANGO_PASSWORD2": "testpass2",
+        "ARANGO_DB_NAME2": "testdb2",
         "ENV": "production"
     }):
         yield
@@ -63,10 +67,19 @@ def test_main(mock_get, mock_print, mock_env):
         {"count": 42},
         {"indexes": [{}]},
         {"count": 10},
+        {"indexes": [{}, {}]},
+        {"result": [{"name": "test_collection1"}, {"name": "test_collection2"}]},
+        {"count": 43},
+        {"indexes": [{}]},
+        {"count": 11},
         {"indexes": [{}, {}]}
     ]
     mock_get.return_value = mock_response
 
     main()
-    mock_print.assert_any_call("Collection name: test_collection1, Document count: 42, Index count: 1")
-    mock_print.assert_any_call("Collection name: test_collection2, Document count: 10, Index count: 2")
+    mock_print.assert_any_call("Collection name: test_collection1")
+    mock_print.assert_any_call("  Instance 1 - Document count: 42, Index count: 1")
+    mock_print.assert_any_call("  Instance 2 - Document count: 43, Index count: 1")
+    mock_print.assert_any_call("Collection name: test_collection2")
+    mock_print.assert_any_call("  Instance 1 - Document count: 10, Index count: 2")
+    mock_print.assert_any_call("  Instance 2 - Document count: 11, Index count: 2")
