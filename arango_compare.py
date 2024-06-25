@@ -15,18 +15,31 @@ class ArangoDBClient:
         response.raise_for_status()
         return response.json().get('result', [])
 
+    def get_collection_details(self, collection_name: str) -> Dict[str, Any]:
+        collection_url = f"{self.url}/_db/{self.db_name}/_api/collection/{collection_name}/count"
+        response = requests.get(collection_url, auth=self.auth)
+        response.raise_for_status()
+        document_count = response.json().get('count', 0)
+
+        indexes_url = f"{self.url}/_db/{self.db_name}/_api/index?collection={collection_name}"
+        response = requests.get(indexes_url, auth=self.auth)
+        response.raise_for_status()
+        index_count = len(response.json().get('indexes', []))
+
+        return {
+            'document_count': document_count,
+            'index_count': index_count
+        }
+
 def main():
-    # Check if running in production environment
     is_production = os.getenv("ENV", "development") == "production"
 
     if is_production:
-        # Get connection settings from environment variables
         arango_url = os.getenv("ARANGO_URL1", "http://localhost:8529")
         arango_username = os.getenv("ARANGO_USERNAME1", "root")
         arango_password = os.getenv("ARANGO_PASSWORD1", "password")
         arango_db_name = os.getenv("ARANGO_DB_NAME1", "_system")
 
-        # Initialize the client with the server details
         client = ArangoDBClient(
             url=arango_url,
             username=arango_username,
@@ -36,7 +49,9 @@ def main():
 
         collections = client.get_collections()
         for collection in collections:
-            print(f"Collection name: {collection['name']}")
+            collection_name = collection['name']
+            details = client.get_collection_details(collection_name)
+            print(f"Collection name: {collection_name}, Document count: {details['document_count']}, Index count: {details['index_count']}")
     else:
         print("Skipping database connection in non-production environment")
 

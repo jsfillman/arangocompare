@@ -5,6 +5,7 @@ A tool to compare data in ArangoDB instances.
 ## Requirements
 
 - Docker
+- ArangoDB Deployment
 
 ## Installation
 
