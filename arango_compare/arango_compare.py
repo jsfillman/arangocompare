@@ -97,7 +97,6 @@ def compare_arango_collections(client1: ArangoDBClient, client2: ArangoDBClient)
 
     return differences
 
-
 def main():
     # Server 1
     arango_url1 = os.getenv("ARANGO_URL1", "http://localhost:8529")
@@ -127,6 +126,9 @@ def main():
 
     differences = compare_arango_collections(client1, client2)
 
+    additional_details1 = client1.get_additional_details()
+    additional_details2 = client2.get_additional_details()
+
     for collection_name, details1, details2 in differences:
         if collection_name == 'additional_details':
             print("Additional Details Differences:")
@@ -140,6 +142,10 @@ def main():
             print(f"Collection name: {collection_name} exists only on Server1 with Document count: {details1['document_count']} and Index count: {details1['index_count']}")
         elif details2:
             print(f"Collection name: {collection_name} exists only on Server2 with Document count: {details2['document_count']} and Index count: {details2['index_count']}")
+
+    print("Additional Details:")
+    print(f"  Server1 - Graph count: {additional_details1['graph_count']}, View count: {additional_details1['view_count']}, Analyzer count: {additional_details1['analyzer_count']}")
+    print(f"  Server2 - Graph count: {additional_details2['graph_count']}, View count: {additional_details2['view_count']}, Analyzer count: {additional_details2['analyzer_count']}")
 
 if __name__ == "__main__":
     main()
