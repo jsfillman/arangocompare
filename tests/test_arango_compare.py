@@ -78,7 +78,7 @@ def test_main(mock_get, mock_print, mock_env):
         {"count": 11},
         {"indexes": [{}, {}]}
     ]
-    mock_get.return_value = mock_response
+    mock_get.side_effect = mock_response.json.side_effect
 
     main()
     mock_print.assert_any_call("Collection name: test_collection1")
