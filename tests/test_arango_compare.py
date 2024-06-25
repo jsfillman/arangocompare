@@ -63,12 +63,16 @@ def test_get_collection_details(mock_get, mock_env):
 def test_main(mock_get, mock_print, mock_env):
     mock_response = MagicMock()
     mock_response.json.side_effect = [
+        # First instance - get collections
         {"result": [{"name": "test_collection1"}, {"name": "test_collection2"}]},
+        # First instance - get collection details
         {"count": 42},
         {"indexes": [{}]},
         {"count": 10},
         {"indexes": [{}, {}]},
+        # Second instance - get collections
         {"result": [{"name": "test_collection1"}, {"name": "test_collection2"}]},
+        # Second instance - get collection details
         {"count": 43},
         {"indexes": [{}]},
         {"count": 11},
