@@ -19,7 +19,6 @@ ENV ARANGO_PASSWORD1=testpassword
 ENV ARANGO_DB_NAME1=_system
 
 # Set environment variables
-ENV ENV=development
 ENV ARANGO_URL2=http://arangodb:8530
 ENV ARANGO_USERNAME2=root
 ENV ARANGO_PASSWORD2=testpassword

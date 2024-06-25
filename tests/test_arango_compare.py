@@ -1,7 +1,7 @@
 import os
 import pytest
-from unittest.mock import patch, MagicMock
-from arango_compare.arango_compare import ArangoDBClient, main
+from unittest.mock import (call, patch, MagicMock)
+from arango_compare.arango_compare import ArangoDBClient, compare_arango_collections, main
 
 @pytest.fixture
 def mock_env():
@@ -62,30 +62,66 @@ def test_get_collection_details(mock_get, mock_env):
     assert details["document_count"] == 42
     assert details["index_count"] == 1
 
-@patch("builtins.print")
-@patch("requests.get")
-def test_main(mock_get, mock_print, mock_env):
-    mock_response = MagicMock()
-    mock_response.json.side_effect = [
-        # First instance - get collections
-        {"result": [{"name": "test_collection1"}, {"name": "test_collection2"}]},
-        # First instance - get collection details
-        {"count": 42},
-        {"indexes": [{}]},
-        {"count": 10},
-        {"indexes": [{}, {}]},
-        # Second instance - get collections
-        {"result": [{"name": "test_collection1"}, {"name": "test_collection2"}]},
-        # Second instance - get collection details
-        {"count": 43},
-        {"indexes": [{}]},
-        {"count": 11},
-        {"indexes": [{}, {}]}
+@patch("arango_compare.arango_compare.ArangoDBClient.get_collections")
+@patch("arango_compare.arango_compare.ArangoDBClient.get_collection_details")
+def test_compare_arango_collections(mock_get_collection_details, mock_get_collections, mock_env):
+    mock_get_collections.side_effect = [
+        [{"name": "test_collection1"}, {"name": "test_collection2"}],
+        [{"name": "test_collection1"}, {"name": "test_collection3"}]
     ]
-    mock_response.raise_for_status = MagicMock()
-    mock_get.return_value = mock_response
+    mock_get_collection_details.side_effect = [
+        {"document_count": 42, "index_count": 1},
+        {"document_count": 10, "index_count": 2},
+        {"document_count": 43, "index_count": 1},
+        {"document_count": 11, "index_count": 2}
+    ]
+
+    client1 = ArangoDBClient(
+        url=os.getenv("ARANGO_URL1"),
+        username=os.getenv("ARANGO_USERNAME1"),
+        password=os.getenv("ARANGO_PASSWORD1"),
+        db_name=os.getenv("ARANGO_DB_NAME1")
+    )
+    client2 = ArangoDBClient(
+        url=os.getenv("ARANGO_URL2"),
+        username=os.getenv("ARANGO_USERNAME2"),
+        password=os.getenv("ARANGO_PASSWORD2"),
+        db_name=os.getenv("ARANGO_DB_NAME2")
+    )
+
+    differences = compare_arango_collections(client1, client2)
+    assert len(differences) == 3
+    assert differences[0] == ("test_collection1", {"document_count": 42, "index_count": 1}, {"document_count": 43, "index_count": 1})
+    assert differences[1] == ("test_collection2", {"document_count": 10, "index_count": 2}, None)
+    assert differences[2] == ("test_collection3", None, {"document_count": 11, "index_count": 2})
+
+@patch("builtins.print")
+@patch("arango_compare.arango_compare.compare_arango_collections")
+@patch("arango_compare.arango_compare.ArangoDBClient.get_collections")
+@patch("arango_compare.arango_compare.ArangoDBClient.get_collection_details")
+def test_main(mock_get_collection_details, mock_get_collections, mock_compare, mock_print, mock_env):
+    mock_get_collections.side_effect = [
+        [{"name": "test_collection1"}, {"name": "test_collection2"}],
+        [{"name": "test_collection1"}, {"name": "test_collection2"}]
+    ]
+    mock_get_collection_details.side_effect = [
+        {"document_count": 42, "index_count": 1},
+        {"document_count": 10, "index_count": 2},
+        {"document_count": 43, "index_count": 1},
+        {"document_count": 11, "index_count": 2}
+    ]
+    mock_compare.return_value = [
+        ("test_collection1", {"document_count": 42, "index_count": 1}, {"document_count": 43, "index_count": 1}),
+        ("test_collection2", {"document_count": 10, "index_count": 2}, {"document_count": 11, "index_count": 2})
+    ]
 
     main()
-    mock_print.assert_any_call("Collection name: test_collection1, Document count: 42, Index count: 1")
-    mock_print.assert_any_call("Collection name: test_collection2, Document count: 10, Index count: 2")
-
+    calls = [
+        call("Collection name: test_collection1"),
+        call("  Server1 - Document count: 42, Index count: 1"),
+        call("  Server2 - Document count: 43, Index count: 1"),
+        call("Collection name: test_collection2"),
+        call("  Server1 - Document count: 10, Index count: 2"),
+        call("  Server2 - Document count: 11, Index count: 2")
+    ]
+    mock_print.assert_has_calls(calls, any_order=True)
