@@ -18,12 +18,10 @@ ENV ARANGO_USERNAME1=root
 ENV ARANGO_PASSWORD1=testpassword
 ENV ARANGO_DB_NAME1=_system
 
-# Set environment variables
-ENV ENV=development
 ENV ARANGO_URL2=http://arangodb:8530
 ENV ARANGO_USERNAME2=root
 ENV ARANGO_PASSWORD2=testpassword
 ENV ARANGO_DB_NAME2=_system
 
-# Command to run the application
-CMD ["python", "arango_compare.py"]
+# Default command
+CMD ["echo", "Docker image built successfully"]
