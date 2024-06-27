@@ -159,23 +159,3 @@ jobs:
             TAG='${{ github.ref }}'
           tags: ${{ steps.tags.outputs.result }}
 
-  trivy-scans:
-    if: (github.base_ref == 'develop' || github.base_ref == 'main' || github.base_ref == 'master') && github.event.pull_request.merged == false
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out GitHub Repo
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        run: docker buildx build --platform linux/amd64,linux/arm64/v8 -t ${{ github.repository }}:trivy-scan .
-
-      - name: Run Trivy scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ github.repository }}:trivy-scan

@@ -82,6 +82,12 @@ jobs:
             TAG='${{ github.ref }}'
           tags: ${{ steps.tags.outputs.result }}
 
+      - name: Run tests and generate coverage report
+        run: |
+          # Install dependencies and run tests to generate coverage report
+          pip install -r requirements.txt
+          pytest --cov=arango_compare --cov-report=xml
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
