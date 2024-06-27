@@ -1,36 +1,35 @@
 # ArangoCompare
 
-A tool to compare data in ArangoDB instances.
+![Codecov](https://codecov.io/gh/jsfillman/arangocompare/branch/main/graph/badge.svg)
 
-## Requirements
+## Overview
 
-- Docker
-- ArangoDB Deployment
+`ArangoCompare` is a tool that compares collections, documents, and indexes between two ArangoDB instances. It helps in identifying differences between two ArangoDB databases, including collection details and additional database features like graphs, views, and analyzers.
 
-## Installation
+## Environment Variables
 
-Build the Docker image:
+When deploying `ArangoCompare`, the following environment variables can be defined:
 
-```bash
-docker build -t arango_compare .
-```
+### ArangoDB Instance 1
 
-## Running Tests
+- `ARANGO_URL1`: The URL of the first ArangoDB instance. Default is `http://localhost:8529`.
+- `ARANGO_USERNAME1`: The username for the first ArangoDB instance. Default is `root`.
+- `ARANGO_PASSWORD1`: The password for the first ArangoDB instance. Default is `password`.
+- `ARANGO_DB_NAME1`: The database name for the first ArangoDB instance. Default is `_system`.
 
-Run the tests inside the Docker container:
+### ArangoDB Instance 2
 
-```bash
-docker run --rm arango_compare
-```
+- `ARANGO_URL2`: The URL of the second ArangoDB instance. Default is `http://localhost:8530`.
+- `ARANGO_USERNAME2`: The username for the second ArangoDB instance. Default is `root`.
+- `ARANGO_PASSWORD2`: The password for the second ArangoDB instance. Default is `password`.
+- `ARANGO_DB_NAME2`: The database name for the second ArangoDB instance. Default is `_system`.
 
-## Running the Application
+### Additional Configuration
 
-Run the application inside the Docker container:
+- `ENV`: The environment in which the tool is running (e.g., `production`, `development`). Default is `development`.
 
-```bash
-docker run --rm arango_compare
-```
+## Deploying
 
----
+The simplest method of deploying `ArangoCompare` is to use the provided Docker image.
+The above variables can be used to configure the tool when deploying it as a container.
 
-[![codecov](https://codecov.io/gh/jsfillman/arangocompare/graph/badge.svg?token=bPpQPJCEjv)](https://codecov.io/gh/jsfillman/arangocompare)
