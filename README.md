@@ -30,3 +30,7 @@ Run the application inside the Docker container:
 ```bash
 docker run --rm arango_compare
 ```
+
+---
+
+![Codecov](https://codecov.io/gh/jsfillman/arangocompare/branch/main/graph/badge.svg)
