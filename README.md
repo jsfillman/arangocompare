@@ -33,4 +33,4 @@ docker run --rm arango_compare
 
 ---
 
-![Codecov](https://codecov.io/gh/jsfillman/arangocompare/branch/main/graph/badge.svg)
+[![codecov](https://codecov.io/gh/jsfillman/arangocompare/graph/badge.svg?token=bPpQPJCEjv)](https://codecov.io/gh/jsfillman/arangocompare)
