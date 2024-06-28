@@ -68,15 +68,23 @@ class ArangoDBClient:
         response.raise_for_status()
         return len(response.json().get('result', []))
 
+    def get_queries(self) -> int:
+        """Fetch the count of saved queries"""
+        queries_url = f"{self.url}/_db/{self.db_name}/_api/query/properties"
+        response = requests.get(queries_url, auth=self.auth)
+        response.raise_for_status()
+        return len(response.json().get('queries', []))
+
     def get_additional_details(self) -> Dict[str, int]:
-        """Fetch additional details such as graph, view, and analyzer counts"""
+        """Fetch additional details such as graph, view, analyzer, and saved query counts"""
         return {
             'graph_count': self.get_graphs(),
             'view_count': self.get_views(),
-            'analyzer_count': self.get_analyzers()
+            'analyzer_count': self.get_analyzers(),
+            'query_count': self.get_queries()
         }
 
-def compare_arango_collections(client1: ArangoDBClient, client2: ArangoDBClient):
+def compare_arango_collections(client1: ArangoDBClient, client2: ArangoDBClient) -> List[Dict[str, Any]]:
     """Compare collections and additional details between two ArangoDB clients"""
     collections1 = client1.get_collections()
     collections2 = client2.get_collections()
@@ -105,13 +113,17 @@ def compare_arango_collections(client1: ArangoDBClient, client2: ArangoDBClient)
 
     return differences
 
-def print_differences(differences):
+def print_differences(differences: List[Dict[str, Any]]):
     """Print the differences found between two ArangoDB clients"""
+    if not differences:
+        print("No differences found between the databases.")
+        return
+
     for collection_name, details1, details2 in differences:
         if collection_name == 'additional_details':
             print("Additional Details Differences:")
-            print(f"  Server1 - Graph count: {details1['graph_count']}, View count: {details1['view_count']}, Analyzer count: {details1['analyzer_count']}")
-            print(f"  Server2 - Graph count: {details2['graph_count']}, View count: {details2['view_count']}, Analyzer count: {details2['analyzer_count']}")
+            print(f"  Server1 - Graph count: {details1['graph_count']}, View count: {details1['view_count']}, Analyzer count: {details1['analyzer_count']}, Query count: {details1['query_count']}")
+            print(f"  Server2 - Graph count: {details2['graph_count']}, View count: {details2['view_count']}, Analyzer count: {details2['analyzer_count']}, Query count: {details2['query_count']}")
         elif details1 and details2:
             print(f"Collection name: {collection_name}")
             print(f"  Server1 - Document count: {details1['document_count']}, Index count: {details1['index_count']}")
