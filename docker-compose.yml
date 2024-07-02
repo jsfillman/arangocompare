@@ -1,14 +1,16 @@
 version: '3.8'
 
 services:
-  arangodb:
-    image: arangodb:3.11.8
-    ports:
-      - "8529:8529"
+  arango-compare:
+    build: .
     environment:
-      ARANGO_ROOT_PASSWORD: "testpassword"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8529/_api/version || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
+      DB1_URL: ${DB1_URL}
+      DB1_USERNAME: ${DB1_USERNAME}
+      DB1_PASSWORD: ${DB1_PASSWORD}
+      DB1_NAME: ${DB1_NAME}
+      DB2_URL: ${DB2_URL}
+      DB2_USERNAME: ${DB2_USERNAME}
+      DB2_PASSWORD: ${DB2_PASSWORD}
+      DB2_NAME: ${DB2_NAME}
+    ports:
+      - "80:80"
