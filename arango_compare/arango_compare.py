@@ -54,119 +54,23 @@ class ArangoDBClient:
         response.raise_for_status()
         return len(response.json().get('graphs', []))
 
-    def get_views(self) -> int:
-        """Fetch the count of views"""
-        views_url = f"{self.url}/_db/{self.db_name}/_api/view"
-        response = requests.get(views_url, auth=self.auth)
-        response.raise_for_status()
-        return len(response.json().get('result', []))
+    def get_summary(self) -> Dict[str, Any]:
+        """Get a summary of the database collections, documents, indexes, and graphs"""
+        collections = self.get_collections()
+        total_collections = len(collections)
+        total_documents = 0
+        total_indexes = 0
 
-    def get_analyzers(self) -> int:
-        """Fetch the count of analyzers"""
-        analyzers_url = f"{self.url}/_db/{self.db_name}/_api/analyzer"
-        response = requests.get(analyzers_url, auth=self.auth)
-        response.raise_for_status()
-        return len(response.json().get('result', []))
+        for collection in collections:
+            details = self.get_collection_details(collection['name'])
+            total_documents += details['document_count']
+            total_indexes += details['index_count']
 
-    def get_queries(self) -> int:
-        """Fetch the count of saved queries"""
-        queries_url = f"{self.url}/_db/{self.db_name}/_api/query/properties"
-        response = requests.get(queries_url, auth=self.auth)
-        response.raise_for_status()
-        return len(response.json().get('queries', []))
+        total_graphs = self.get_graphs()
 
-    def get_additional_details(self) -> Dict[str, int]:
-        """Fetch additional details such as graph, view, analyzer, and saved query counts"""
         return {
-            'graph_count': self.get_graphs(),
-            'view_count': self.get_views(),
-            'analyzer_count': self.get_analyzers(),
-            'query_count': self.get_queries()
+            'total_collections': total_collections,
+            'total_documents': total_documents,
+            'total_indexes': total_indexes,
+            'total_graphs': total_graphs
         }
-
-def compare_arango_collections(client1: ArangoDBClient, client2: ArangoDBClient) -> List[Dict[str, Any]]:
-    """Compare collections and additional details between two ArangoDB clients"""
-    collections1 = client1.get_collections()
-    collections2 = client2.get_collections()
-
-    collection_details1 = {col['name']: client1.get_collection_details(col['name']) for col in collections1}
-    collection_details2 = {col['name']: client2.get_collection_details(col['name']) for col in collections2}
-
-    additional_details1 = client1.get_additional_details()
-    additional_details2 = client2.get_additional_details()
-
-    differences = []
-
-    for collection_name, details1 in collection_details1.items():
-        details2 = collection_details2.get(collection_name)
-        if not details2:
-            differences.append((collection_name, details1, None))
-        elif details1['document_count'] != details2['document_count'] or details1['index_count'] != details2['index_count']:
-            differences.append((collection_name, details1, details2))
-
-    for collection_name, details2 in collection_details2.items():
-        if collection_name not in collection_details1:
-            differences.append((collection_name, None, details2))
-
-    if additional_details1 != additional_details2:
-        differences.append(('additional_details', additional_details1, additional_details2))
-
-    return differences
-
-def print_differences(differences: List[Dict[str, Any]]):
-    """Print the differences found between two ArangoDB clients"""
-    if not differences:
-        print("No differences found between the databases.")
-        return
-
-    for collection_name, details1, details2 in differences:
-        if collection_name == 'additional_details':
-            print("Additional Details Differences:")
-            print(f"  Server1 - Graph count: {details1['graph_count']}, View count: {details1['view_count']}, Analyzer count: {details1['analyzer_count']}, Query count: {details1['query_count']}")
-            print(f"  Server2 - Graph count: {details2['graph_count']}, View count: {details2['view_count']}, Analyzer count: {details2['analyzer_count']}, Query count: {details2['query_count']}")
-        elif details1 and details2:
-            print(f"Collection name: {collection_name}")
-            print(f"  Server1 - Document count: {details1['document_count']}, Index count: {details1['index_count']}")
-            print(f"  Server2 - Document count: {details2['document_count']}, Index count: {details2['index_count']}")
-        elif details1:
-            print(f"Collection name: {collection_name} exists only on Server1 with Document count: {details1['document_count']} and Index count: {details1['index_count']}")
-        elif details2:
-            print(f"Collection name: {collection_name} exists only on Server2 with Document count: {details2['document_count']} and Index count: {details2['index_count']}")
-
-def main():
-    """Main function to compare two ArangoDB instances"""
-    try:
-        # Server 1
-        arango_url1 = os.getenv("ARANGO_URL1", "http://localhost:8529")
-        arango_username1 = os.getenv("ARANGO_USERNAME1", "root")
-        arango_password1 = os.getenv("ARANGO_PASSWORD1", "password")
-        arango_db_name1 = os.getenv("ARANGO_DB_NAME1", "_system")
-
-        client1 = ArangoDBClient(
-            url=arango_url1,
-            username=arango_username1,
-            password=arango_password1,
-            db_name=arango_db_name1
-        )
-
-        # Server 2
-        arango_url2 = os.getenv("ARANGO_URL2", "http://localhost:8530")
-        arango_username2 = os.getenv("ARANGO_USERNAME2", "root")
-        arango_password2 = os.getenv("ARANGO_PASSWORD2", "password")
-        arango_db_name2 = os.getenv("ARANGO_DB_NAME2", "_system")
-
-        client2 = ArangoDBClient(
-            url=arango_url2,
-            username=arango_username2,
-            password=arango_password2,
-            db_name=arango_db_name2
-        )
-
-        differences = compare_arango_collections(client1, client2)
-        print_differences(differences)
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-if __name__ == "__main__":
-    main()
