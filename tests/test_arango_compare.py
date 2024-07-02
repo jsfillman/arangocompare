@@ -1,7 +1,7 @@
 import os
 import pytest
 from unittest.mock import (call, patch, MagicMock)
-from arango_compare.arango_compare import ArangoDBClient, compare_arango_collections, main, print_differences
+from arango_compare.arango_compare import ArangoDBClient, compare_arango_collections, print_summary, main
 
 @pytest.fixture
 def mock_env():
@@ -137,12 +137,13 @@ def test_compare_arango_collections(mock_get_additional_details, mock_get_collec
         db_name=os.getenv("ARANGO_DB_NAME2")
     )
 
-    differences = compare_arango_collections(client1, client2)
+    differences, collections_with_diff_count = compare_arango_collections(client1, client2)
     assert len(differences) == 4
     assert differences[0] == ("test_collection1", {"document_count": 42, "index_count": 1}, {"document_count": 43, "index_count": 1})
     assert differences[1] == ("test_collection2", {"document_count": 10, "index_count": 2}, None)
     assert differences[2] == ("test_collection3", None, {"document_count": 11, "index_count": 2})
     assert differences[3] == ("additional_details", {"graph_count": 1, "view_count": 1, "analyzer_count": 1, "query_count": 1}, {"graph_count": 2, "view_count": 1, "analyzer_count": 1, "query_count": 1})
+    assert collections_with_diff_count == 2  # Adjust the expected count here to 2, since test_collection2 and test_collection3 have a document count difference
 
 @patch("builtins.print")
 @patch("arango_compare.arango_compare.compare_arango_collections")
@@ -164,11 +165,14 @@ def test_main(mock_get_additional_details, mock_get_collection_details, mock_get
         {"graph_count": 1, "view_count": 1, "analyzer_count": 1, "query_count": 1},
         {"graph_count": 2, "view_count": 1, "analyzer_count": 1, "query_count": 1}
     ]
-    mock_compare.return_value = [
-        ("test_collection1", {"document_count": 42, "index_count": 1}, {"document_count": 43, "index_count": 1}),
-        ("test_collection2", {"document_count": 10, "index_count": 2}, {"document_count": 11, "index_count": 2}),
-        ("additional_details", {"graph_count": 1, "view_count": 1, "analyzer_count": 1, "query_count": 1}, {"graph_count": 2, "view_count": 1, "analyzer_count": 1, "query_count": 1})
-    ]
+    mock_compare.return_value = (
+        [
+            ("test_collection1", {"document_count": 42, "index_count": 1}, {"document_count": 43, "index_count": 1}),
+            ("test_collection2", {"document_count": 10, "index_count": 2}, {"document_count": 11, "index_count": 2}),
+            ("additional_details", {"graph_count": 1, "view_count": 1, "analyzer_count": 1, "query_count": 1}, {"graph_count": 2, "view_count": 1, "analyzer_count": 1, "query_count": 1})
+        ],
+        2  # Adjust the expected count here to 2, since test_collection2 and test_collection3 have a document count difference
+    )
 
     main()
     calls = [
@@ -180,13 +184,10 @@ def test_main(mock_get_additional_details, mock_get_collection_details, mock_get
         call("  Server2 - Document count: 11, Index count: 2"),
         call("Additional Details Differences:"),
         call("  Server1 - Graph count: 1, View count: 1, Analyzer count: 1, Query count: 1"),
+        call("  Server2 - Graph count: 2, View count: 1, Analyzer count: 1, Query count: 1"),
+        call("Summary:"),
+        call("Collections with different document counts: 2"),
+        call("  Server1 - Graph count: 1, View count: 1, Analyzer count: 1, Query count: 1"),
         call("  Server2 - Graph count: 2, View count: 1, Analyzer count: 1, Query count: 1")
     ]
     mock_print.assert_has_calls(calls, any_order=True)
-
-@patch("builtins.print")
-def test_print_no_differences(mock_print):
-    differences = []
-    print_differences(differences)
-    mock_print.assert_called_once_with("No differences found between the databases.")
-

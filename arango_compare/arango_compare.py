@@ -96,6 +96,7 @@ def compare_arango_collections(client1: ArangoDBClient, client2: ArangoDBClient)
     additional_details2 = client2.get_additional_details()
 
     differences = []
+    collections_with_diff_count = 0
 
     for collection_name, details1 in collection_details1.items():
         details2 = collection_details2.get(collection_name)
@@ -103,6 +104,7 @@ def compare_arango_collections(client1: ArangoDBClient, client2: ArangoDBClient)
             differences.append((collection_name, details1, None))
         elif details1['document_count'] != details2['document_count'] or details1['index_count'] != details2['index_count']:
             differences.append((collection_name, details1, details2))
+            collections_with_diff_count += 1
 
     for collection_name, details2 in collection_details2.items():
         if collection_name not in collection_details1:
@@ -111,7 +113,7 @@ def compare_arango_collections(client1: ArangoDBClient, client2: ArangoDBClient)
     if additional_details1 != additional_details2:
         differences.append(('additional_details', additional_details1, additional_details2))
 
-    return differences
+    return differences, collections_with_diff_count
 
 def print_differences(differences: List[Dict[str, Any]]):
     """Print the differences found between two ArangoDB clients"""
@@ -132,6 +134,13 @@ def print_differences(differences: List[Dict[str, Any]]):
             print(f"Collection name: {collection_name} exists only on Server1 with Document count: {details1['document_count']} and Index count: {details1['index_count']}")
         elif details2:
             print(f"Collection name: {collection_name} exists only on Server2 with Document count: {details2['document_count']} and Index count: {details2['index_count']}")
+
+def print_summary(additional_details1: Dict[str, int], additional_details2: Dict[str, int], collections_with_diff_count: int):
+    """Print the summary of differences"""
+    print("Summary:")
+    print(f"Collections with different document counts: {collections_with_diff_count}")
+    print(f"  Server1 - Graph count: {additional_details1['graph_count']}, View count: {additional_details1['view_count']}, Analyzer count: {additional_details1['analyzer_count']}, Query count: {additional_details1['query_count']}")
+    print(f"  Server2 - Graph count: {additional_details2['graph_count']}, View count: {additional_details2['view_count']}, Analyzer count: {additional_details2['analyzer_count']}, Query count: {additional_details2['query_count']}")
 
 def main():
     """Main function to compare two ArangoDB instances"""
@@ -162,8 +171,12 @@ def main():
             db_name=arango_db_name2
         )
 
-        differences = compare_arango_collections(client1, client2)
+        differences, collections_with_diff_count = compare_arango_collections(client1, client2)
         print_differences(differences)
+
+        if 'additional_details' in differences:
+            _, additional_details1, additional_details2 = differences.pop()
+            print_summary(additional_details1, additional_details2, collections_with_diff_count)
 
     except Exception as e:
         print(f"An error occurred: {e}")
