@@ -22,4 +22,4 @@ ENV ARANGO_PASSWORD2=password
 ENV ARANGO_DB_NAME2=test_db2
 
 # Run arango_compare.py when the container launches
-CMD ["python", "./arango_compare/arango_compare.py"]
+CMD ["python", "arango_compare/arango_compare.py"]
