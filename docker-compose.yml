@@ -4,6 +4,7 @@ services:
   arango-compare:
     build: .
     environment:
+      ENV: ${ENV}
       ARANGO_URL1: ${ARANGO_URL1}
       ARANGO_USERNAME1: ${ARANGO_USERNAME1}
       ARANGO_PASSWORD1: ${ARANGO_PASSWORD1}

@@ -24,4 +24,4 @@ ENV ARANGO_PASSWORD2=testpassword
 ENV ARANGO_DB_NAME2=_system
 
 # Default command
-CMD ["echo", "Docker image built successfully"]
+CMD ["python", "arango_compare.py"]
