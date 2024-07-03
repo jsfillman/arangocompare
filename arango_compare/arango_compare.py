@@ -112,6 +112,9 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any]) -> Non
         details2 = summary2['collection_details'][collection]
         if details1['document_count'] != details2['document_count'] or details1['index_count'] != details2['index_count']:
             mismatched_collections.append(collection)
+            print(f"\nCollection name: {collection}")
+            print(f"  Server1 - Document count: {details1['document_count']}, Index count: {details1['index_count']}")
+            print(f"  Server2 - Document count: {details2['document_count']}, Index count: {details2['index_count']}")
 
     print("="*80)
     print("Summary of Differences".center(80))
@@ -149,25 +152,27 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any]) -> Non
     print("="*80)
 
 if __name__ == "__main__":
-    # Example usage with environment variables
-    db1_config = {
-        "url": os.getenv("ARANGO_URL1", "http://localhost:8529"),
-        "username": os.getenv("ARANGO_USERNAME1", "root"),
-        "password": os.getenv("ARANGO_PASSWORD1", "password"),
-        "db_name": os.getenv("ARANGO_DB_NAME1", "test_db1")
-    }
+    if os.getenv("ENV") == "production":
+        db1_config = {
+            "url": os.getenv("ARANGO_URL1", "http://localhost:8529"),
+            "username": os.getenv("ARANGO_USERNAME1", "root"),
+            "password": os.getenv("ARANGO_PASSWORD1", "password"),
+            "db_name": os.getenv("ARANGO_DB_NAME1", "test_db1")
+        }
 
-    db2_config = {
-        "url": os.getenv("ARANGO_URL2", "http://localhost:8529"),
-        "username": os.getenv("ARANGO_USERNAME2", "root"),
-        "password": os.getenv("ARANGO_PASSWORD2", "password"),
-        "db_name": os.getenv("ARANGO_DB_NAME2", "test_db2")
-    }
+        db2_config = {
+            "url": os.getenv("ARANGO_URL2", "http://localhost:8529"),
+            "username": os.getenv("ARANGO_USERNAME2", "root"),
+            "password": os.getenv("ARANGO_PASSWORD2", "password"),
+            "db_name": os.getenv("ARANGO_DB_NAME2", "test_db2")
+        }
 
-    client1 = ArangoDBClient(**db1_config)
-    client2 = ArangoDBClient(**db2_config)
+        client1 = ArangoDBClient(**db1_config)
+        client2 = ArangoDBClient(**db2_config)
 
-    summary1 = client1.get_summary()
-    summary2 = client2.get_summary()
+        summary1 = client1.get_summary()
+        summary2 = client2.get_summary()
 
-    compare_databases(summary1, summary2)
+        compare_databases(summary1, summary2)
+    else:
+        print("Development mode: Build successful")
