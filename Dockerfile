@@ -9,7 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
-COPY arango_compare/arango_compare.py .
+COPY arangocompare/ /app/arangocompare
 
 # Set environment variables
 ENV ENV=development
@@ -24,4 +24,4 @@ ENV ARANGO_PASSWORD2=testpassword
 ENV ARANGO_DB_NAME2=_system
 
 # Default command
-CMD ["python", "arango_compare.py"]
+CMD ["python", "arangocompare/main.py"]
