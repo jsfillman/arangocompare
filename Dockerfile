@@ -11,9 +11,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code
 COPY arango_compare/ /app/arango_compare
 
-# Copy the entrypoint script
-COPY entrypoint.sh /app/entrypoint.sh
-
 # Set environment variables
 ENV ENV=development
 ENV ARANGO_URL1=http://arangodb:8529
@@ -26,6 +23,11 @@ ENV ARANGO_USERNAME2=root
 ENV ARANGO_PASSWORD2=testpassword
 ENV ARANGO_DB_NAME2=_system
 
-# Set the entrypoint
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENV LOGFILE_OUT=/logs
 
+# Copy and set the entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Default entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]

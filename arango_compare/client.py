@@ -1,6 +1,6 @@
+from typing import Dict, Any, List
 import requests
 from requests.auth import HTTPBasicAuth
-from typing import Dict, List, Any
 
 class ArangoDBClient:
     """Client to interact with ArangoDB"""
@@ -80,6 +80,7 @@ class ArangoDBClient:
         total_views = self.get_views()
 
         return {
+            'db_name': self.db_name,
             'total_collections': total_collections,
             'total_documents': total_documents,
             'total_indexes': total_indexes,
