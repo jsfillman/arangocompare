@@ -5,4 +5,3 @@ if [ "$ENV" = "production" ]; then
 else
     echo "Development mode: Build successful"
 fi
-

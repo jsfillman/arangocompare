@@ -18,13 +18,14 @@ if __name__ == "__main__":
             "db_name": os.getenv("ARANGO_DB_NAME2", "test_db2")
         }
 
+        log_dir = os.getenv("LOGFILE_OUT", "/logs")
+
         client1 = ArangoDBClient(**db1_config)
         client2 = ArangoDBClient(**db2_config)
 
         summary1 = client1.get_summary()
         summary2 = client2.get_summary()
 
-        output_file = os.getenv("OUTPUT_FILE", "output.txt")
-        compare_databases(summary1, summary2, output_file)
+        compare_databases(summary1, summary2, log_dir)
     else:
         print("Development mode: Build successful")
