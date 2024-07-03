@@ -148,21 +148,20 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any]) -> Non
     print(f"{'Total views':<30} {summary1['total_views']:>20} {summary2['total_views']:>20}")
     print("="*80)
 
-
 if __name__ == "__main__":
     # Example usage with environment variables
     db1_config = {
-        "url": os.getenv("DB1_URL", "http://localhost:8529"),
-        "username": os.getenv("DB1_USERNAME", "root"),
-        "password": os.getenv("DB1_PASSWORD", "password"),
-        "db_name": os.getenv("DB1_NAME", "test_db1")
+        "url": os.getenv("ARANGO_URL1", "http://localhost:8529"),
+        "username": os.getenv("ARANGO_USERNAME1", "root"),
+        "password": os.getenv("ARANGO_PASSWORD1", "password"),
+        "db_name": os.getenv("ARANGO_DB_NAME1", "test_db1")
     }
 
     db2_config = {
-        "url": os.getenv("DB2_URL", "http://localhost:8529"),
-        "username": os.getenv("DB2_USERNAME", "root"),
-        "password": os.getenv("DB2_PASSWORD", "password"),
-        "db_name": os.getenv("DB2_NAME", "test_db2")
+        "url": os.getenv("ARANGO_URL2", "http://localhost:8529"),
+        "username": os.getenv("ARANGO_USERNAME2", "root"),
+        "password": os.getenv("ARANGO_PASSWORD2", "password"),
+        "db_name": os.getenv("ARANGO_DB_NAME2", "test_db2")
     }
 
     client1 = ArangoDBClient(**db1_config)
