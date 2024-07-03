@@ -9,7 +9,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
-COPY arangocompare/ /app/arangocompare
+# COPY arangocompare/ /app/arangocompare
+COPY . /app
 
 # Set environment variables
 ENV ENV=development
