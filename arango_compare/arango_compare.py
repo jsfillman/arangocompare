@@ -96,7 +96,7 @@ class ArangoDBClient:
             'collection_details': collection_details
         }
 
-def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any]) -> None:
+def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], output_file: str = None) -> None:
     """Compare two database summaries and pretty print the results"""
     collections1 = set(summary1['collection_details'].keys())
     collections2 = set(summary2['collection_details'].keys())
@@ -107,49 +107,61 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any]) -> Non
 
     mismatched_collections = []
 
+    # Open the file if output_file is provided
+    output = open(output_file, 'w') if output_file else None
+
+    def print_and_write(msg):
+        print(msg)
+        if output:
+            output.write(msg + '\n')
+
     for collection in matching_collections:
         details1 = summary1['collection_details'][collection]
         details2 = summary2['collection_details'][collection]
         if details1['document_count'] != details2['document_count'] or details1['index_count'] != details2['index_count']:
             mismatched_collections.append(collection)
-            print(f"\nCollection name: {collection}")
-            print(f"  Server1 - Document count: {details1['document_count']}, Index count: {details1['index_count']}")
-            print(f"  Server2 - Document count: {details2['document_count']}, Index count: {details2['index_count']}")
+            print_and_write(f"\nCollection name: {collection}")
+            print_and_write(f"  Server1 - Document count: {details1['document_count']}, Index count: {details1['index_count']}")
+            print_and_write(f"  Server2 - Document count: {details2['document_count']}, Index count: {details2['index_count']}")
 
-    print("="*80)
-    print("Summary of Differences".center(80))
-    print("="*80)
+    print_and_write("="*80)
+    print_and_write("Summary of Differences".center(80))
+    print_and_write("="*80)
 
-    print(f"\nNumber of collections in DB1 not in DB2: {len(unique_to_db1)}")
+    print_and_write(f"\nNumber of collections in DB1 not in DB2: {len(unique_to_db1)}")
     if unique_to_db1:
-        print("Collections unique to DB1:")
+        print_and_write("Collections unique to DB1:")
         for collection in unique_to_db1:
-            print(f" - {collection}")
+            print_and_write(f" - {collection}")
 
-    print(f"\nNumber of collections in DB2 not in DB1: {len(unique_to_db2)}")
+    print_and_write(f"\nNumber of collections in DB2 not in DB1: {len(unique_to_db2)}")
     if unique_to_db2:
-        print("Collections unique to DB2:")
+        print_and_write("Collections unique to DB2:")
         for collection in unique_to_db2:
-            print(f" - {collection}")
+            print_and_write(f" - {collection}")
 
-    print(f"\nNumber of collections with mismatched document or index counts: {len(mismatched_collections)}")
+    print_and_write(f"\nNumber of collections with mismatched document or index counts: {len(mismatched_collections)}")
     if mismatched_collections:
-        print("Collections with mismatched counts:")
+        print_and_write("Collections with mismatched counts:")
         for collection in mismatched_collections:
-            print(f" - {collection}")
+            print_and_write(f" - {collection}")
 
-    print("\n" + "="*80)
-    print("Overall Feature Counts".center(80))
-    print("="*80)
-    print(f"{'Feature':<30} {'DB1':>20} {'DB2':>20}")
-    print("-"*80)
-    print(f"{'Total collections':<30} {summary1['total_collections']:>20} {summary2['total_collections']:>20}")
-    print(f"{'Total documents':<30} {summary1['total_documents']:>20} {summary2['total_documents']:>20}")
-    print(f"{'Total indexes':<30} {summary1['total_indexes']:>20} {summary2['total_indexes']:>20}")
-    print(f"{'Total graphs':<30} {summary1['total_graphs']:>20} {summary2['total_graphs']:>20}")
-    print(f"{'Total analyzers':<30} {summary1['total_analyzers']:>20} {summary2['total_analyzers']:>20}")
-    print(f"{'Total views':<30} {summary1['total_views']:>20} {summary2['total_views']:>20}")
-    print("="*80)
+    print_and_write("\n" + "="*80)
+    print_and_write("Overall Feature Counts".center(80))
+    print_and_write("="*80)
+    print_and_write(f"{'Feature':<30} {'DB1':>20} {'DB2':>20}")
+    print_and_write("-"*80)
+    print_and_write(f"{'Total collections':<30} {summary1['total_collections']:>20} {summary2['total_collections']:>20}")
+    print_and_write(f"{'Total documents':<30} {summary1['total_documents']:>20} {summary2['total_documents']:>20}")
+    print_and_write(f"{'Total indexes':<30} {summary1['total_indexes']:>20} {summary2['total_indexes']:>20}")
+    print_and_write(f"{'Total graphs':<30} {summary1['total_graphs']:>20} {summary2['total_graphs']:>20}")
+    print_and_write(f"{'Total analyzers':<30} {summary1['total_analyzers']:>20} {summary2['total_analyzers']:>20}")
+    print_and_write(f"{'Total views':<30} {summary1['total_views']:>20} {summary2['total_views']:>20}")
+    print_and_write("="*80)
+
+    # Close the file if it was opened
+    if output:
+        output.close()
 
 if __name__ == "__main__":
     if os.getenv("ENV") == "production":
@@ -173,6 +185,7 @@ if __name__ == "__main__":
         summary1 = client1.get_summary()
         summary2 = client2.get_summary()
 
-        compare_databases(summary1, summary2)
+        output_file = os.getenv("OUTPUT_FILE", "output.txt")
+        compare_databases(summary1, summary2, output_file)
     else:
         print("Development mode: Build successful")
