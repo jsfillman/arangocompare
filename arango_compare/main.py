@@ -1,6 +1,6 @@
 import os
-from client import ArangoDBClient
-from comparator import compare_databases
+from .client import ArangoDBClient
+from .comparator import compare_databases
 
 if __name__ == "__main__":
     if os.getenv("ENV") == "production":

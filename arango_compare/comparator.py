@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from formatter import print_and_write
+from .formatter import print_and_write
 
 def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], output_file: str = None) -> None:
     collections1 = set(summary1['collection_details'].keys())
@@ -11,7 +11,6 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], output
 
     mismatched_collections = []
 
-    # Open the file if output_file is provided
     output = open(output_file, 'w') if output_file else None
 
     for collection in matching_collections:
@@ -58,6 +57,5 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], output
     print_and_write(f"{'Total views':<30} {summary1['total_views']:>20} {summary2['total_views']:>20}", output)
     print_and_write("="*80, output)
 
-    # Close the file if it was opened
     if output:
         output.close()
