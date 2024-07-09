@@ -1,5 +1,6 @@
 # ArangoCompare
 
+
 ![Codecov](https://codecov.io/gh/jsfillman/arangocompare/branch/main/graph/badge.svg)
 
 ## Overview
