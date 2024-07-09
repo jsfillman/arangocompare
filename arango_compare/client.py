@@ -56,7 +56,6 @@ class ArangoDBClient:
         response.raise_for_status()
         return len(response.json().get('result', []))
 
-
     def get_summary(self) -> Dict[str, Any]:
         collections = self.get_collections()
         collection_details = {col['name']: self.get_collection_details(col['name']) for col in collections}
@@ -72,4 +71,3 @@ class ArangoDBClient:
             'total_graphs': graphs,
             'total_analyzers': analyzers
         }
-

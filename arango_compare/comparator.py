@@ -64,4 +64,3 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_di
 
     collections_output.close()
     summary_output.close()
-
