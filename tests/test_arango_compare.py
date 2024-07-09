@@ -115,20 +115,12 @@ class TestArangoDBClient(unittest.TestCase):
             analyzers_calls = [
                 call("# Analyzer Differences", ANY),
                 call("\n## Analyzer: text_sv\n", ANY),
-                call("- **properties**:\n", ANY),
-                call(f"  - DB1: {summary1['analyzers']['text_sv']['properties']}\n", ANY),
-                call(f"  - DB2: {summary2['analyzers']['text_sv']['properties']}\n", ANY),
-                call("- **features**:\n", ANY),
-                call(f"  - DB1: {summary1['analyzers']['text_sv']['features']}\n", ANY),
-                call(f"  - DB2: {summary2['analyzers']['text_sv']['features']}\n", ANY),
+                call("- **properties**:\n  - DB1: {'locale': 'sv.utf-8', 'case': 'lower', 'stopwords': [], 'accent': False, 'stemming': True}\n  - DB2: {'locale': 'sv', 'case': 'lower', 'stopwords': [], 'accent': False, 'stemming': True}\n", ANY),
+                call("- **features**:\n  - DB1: ['position', 'norm', 'frequency']\n  - DB2: ['frequency', 'position', 'norm']\n", ANY),
                 call("\n## Analyzer: text_nl\n", ANY),
-                call("- **properties**:\n", ANY),
-                call(f"  - DB1: {{}}\n", ANY),
-                call(f"  - DB2: {summary2['analyzers']['text_nl']['properties']}\n", ANY),
-                call("- **features**:\n", ANY),
-                call(f"  - DB1: []\n", ANY),
-                call(f"  - DB2: {summary2['analyzers']['text_nl']['features']}\n", ANY),
-                call("\n## Analyzer only in DB2: text_nl\n", ANY)
+                call("- **properties**:\n  - DB1: {}\n  - DB2: {'locale': 'nl.utf-8', 'case': 'lower', 'stopwords': [], 'accent': False, 'stemming': True}\n", ANY),
+                call("- **features**:\n  - DB1: []\n  - DB2: ['position', 'norm', 'frequency']\n", ANY),
+                call("\n## Analyzer only in DB2: text_nl\n", ANY),
             ]
             mock_print_and_write.assert_has_calls(analyzers_calls, any_order=True)
 

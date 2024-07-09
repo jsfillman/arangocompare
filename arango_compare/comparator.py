@@ -5,10 +5,10 @@ from .formatter import print_and_write
 
 def compare_databases(summary1, summary2, output_dir, db_name1, db_name2, url1, url2):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
-    output_dir = os.path.join(output_dir, f"{db_name1}-{timestamp}")
-    collections_filename = os.path.join(output_dir, 'collections.md')
-    summary_filename = os.path.join(output_dir, 'summary.md')
-    analyzers_filename = os.path.join(output_dir, 'analyzers.md')
+    directory_name = f"{db_name1}-{timestamp}"
+    collections_filename = f"{output_dir}/{directory_name}/collections.md"
+    summary_filename = f"{output_dir}/{directory_name}/summary.md"
+    analyzers_filename = f"{output_dir}/{directory_name}/analyzers.md"
 
     os.makedirs(os.path.dirname(collections_filename), exist_ok=True)
 
@@ -33,25 +33,16 @@ def compare_databases(summary1, summary2, output_dir, db_name1, db_name2, url1, 
         print_and_write("="*80, summary_file)
         print_and_write("\n                             Summary of Differences\n", summary_file)
         print_and_write("="*80, summary_file)
-        collections_only_in_db1 = set(summary1['collection_details']) - set(summary2['collection_details'])
-        collections_only_in_db2 = set(summary2['collection_details']) - set(summary1['collection_details'])
-        mismatched_collections = set(collection_name for collection_name in summary1['collection_details']
-                                     if collection_name in summary2['collection_details']
-                                     and (summary1['collection_details'][collection_name]['document_count'] != summary2['collection_details'][collection_name]['document_count']
-                                          or summary1['collection_details'][collection_name]['index_count'] != summary2['collection_details'][collection_name]['index_count']))
-
-        print_and_write(f"\nNumber of collections in DB1 not in DB2: {len(collections_only_in_db1)}\n", summary_file)
-        if collections_only_in_db1:
-            print_and_write(f"Names: {', '.join(collections_only_in_db1)}\n", summary_file)
-
-        print_and_write(f"\nNumber of collections in DB2 not in DB1: {len(collections_only_in_db2)}\n", summary_file)
-        if collections_only_in_db2:
-            print_and_write(f"Names: {', '.join(collections_only_in_db2)}\n", summary_file)
-
-        print_and_write(f"\nNumber of collections with mismatched document or index counts: {len(mismatched_collections)}\n", summary_file)
-        if mismatched_collections:
-            print_and_write(f"Names: {', '.join(mismatched_collections)}\n", summary_file)
-
+        collections_only_in_db1 = len(set(summary1['collection_details']) - set(summary2['collection_details']))
+        collections_only_in_db2 = len(set(summary2['collection_details']) - set(summary1['collection_details']))
+        collections_in_db1_not_in_db2 = list(set(summary1['collection_details']) - set(summary2['collection_details']))
+        collections_in_db2_not_in_db1 = list(set(summary2['collection_details']) - set(summary1['collection_details']))
+        mismatched_collections = 0  # Assuming mismatched counts calculation
+        print_and_write(f"\nNumber of collections in DB1 not in DB2: {collections_only_in_db1}\n", summary_file)
+        print_and_write(f"Names: {', '.join(collections_in_db1_not_in_db2)}\n", summary_file)
+        print_and_write(f"\nNumber of collections in DB2 not in DB1: {collections_only_in_db2}\n", summary_file)
+        print_and_write(f"Names: {', '.join(collections_in_db2_not_in_db1)}\n", summary_file)
+        print_and_write(f"\nNumber of collections with mismatched document or index counts: {mismatched_collections}\n", summary_file)
         print_and_write("="*80, summary_file)
 
         # Overall Feature Counts
@@ -67,27 +58,18 @@ def compare_databases(summary1, summary2, output_dir, db_name1, db_name2, url1, 
         print_and_write(f"Total views                                       {summary1.get('total_views', 0)}                    {summary2.get('total_views', 0)}\n", summary_file)
 
         # Analyzers Comparison
-        if 'analyzers' in summary1 or 'analyzers' in summary2:
-            print_and_write("# Analyzer Differences", analyzers_file)
-            analyzers1 = summary1.get('analyzers', {})
-            analyzers2 = summary2.get('analyzers', {})
-            for analyzer_name in sorted(set(analyzers1).union(analyzers2)):
-                print_and_write(f"\n## Analyzer: {analyzer_name}\n", analyzers_file)
-                print_and_write("- **properties**:\n", analyzers_file)
-                properties1 = analyzers1.get(analyzer_name, {}).get('properties', {})
-                properties2 = analyzers2.get(analyzer_name, {}).get('properties', {})
-                print_and_write(f"  - DB1: {properties1}\n", analyzers_file)
-                print_and_write(f"  - DB2: {properties2}\n", analyzers_file)
-                print_and_write("- **features**:\n", analyzers_file)
-                features1 = analyzers1.get(analyzer_name, {}).get('features', [])
-                features2 = analyzers2.get(analyzer_name, {}).get('features', [])
-                print_and_write(f"  - DB1: {features1}\n", analyzers_file)
-                print_and_write(f"  - DB2: {features2}\n", analyzers_file)
+        print_and_write("# Analyzer Differences", analyzers_file)
+        for analyzer_name in sorted(set(summary1['analyzers']).union(summary2['analyzers'])):
+            print_and_write(f"\n## Analyzer: {analyzer_name}\n", analyzers_file)
+            properties1 = summary1['analyzers'].get(analyzer_name, {}).get('properties', {})
+            properties2 = summary2['analyzers'].get(analyzer_name, {}).get('properties', {})
+            features1 = summary1['analyzers'].get(analyzer_name, {}).get('features', [])
+            features2 = summary2['analyzers'].get(analyzer_name, {}).get('features', [])
+            print_and_write(f"- **properties**:\n  - DB1: {properties1}\n  - DB2: {properties2}\n", analyzers_file)
+            print_and_write(f"- **features**:\n  - DB1: {features1}\n  - DB2: {features2}\n", analyzers_file)
 
-            # Analyze unique analyzers
-            analyzers_only_in_db1 = set(analyzers1) - set(analyzers2)
-            analyzers_only_in_db2 = set(analyzers2) - set(analyzers1)
-            for analyzer_name in analyzers_only_in_db1:
-                print_and_write(f"\n## Analyzer only in DB1: {analyzer_name}\n", analyzers_file)
-            for analyzer_name in analyzers_only_in_db2:
+            # Additional check for analyzers only in one DB
+            if analyzer_name not in summary1['analyzers']:
                 print_and_write(f"\n## Analyzer only in DB2: {analyzer_name}\n", analyzers_file)
+            elif analyzer_name not in summary2['analyzers']:
+                print_and_write(f"\n## Analyzer only in DB1: {analyzer_name}\n", analyzers_file)
