@@ -1,7 +1,7 @@
 import os
 import datetime
 from typing import Dict, Any
-from .formatter import print_and_write
+from .formatter import print_and_write, write_view_differences
 
 def compare_analyzer_details(client1, client2, analyzers1, analyzers2, log_subdir):
     analyzers1_dict = {analyzer['name']: analyzer for analyzer in analyzers1}
@@ -31,6 +31,18 @@ def compare_analyzer_details(client1, client2, analyzers1, analyzers2, log_subdi
         for analyzer_name in analyzers2_dict:
             if analyzer_name not in analyzers1_dict:
                 print_and_write(f"\n## Analyzer only in DB2: {analyzer_name}", output)
+
+def compare_views(source_views, target_views):
+    differences = []
+    source_views_dict = {view['name']: view for view in source_views}
+    target_views_dict = {view['name']: view for view in target_views}
+
+    for view_name, view in source_views_dict.items():
+        if view_name not in target_views_dict:
+            differences.append(f"View {view_name} missing in target")
+        elif view != target_views_dict[view_name]:
+            differences.append(f"View {view_name} differs")
+    return differences
 
 def compare_databases(client1, client2, summary1: Dict[str, Any], summary2: Dict[str, Any], log_dir: str) -> None:
     collections1 = set(summary1['collection_details'].keys())
@@ -96,3 +108,7 @@ def compare_databases(client1, client2, summary1: Dict[str, Any], summary2: Dict
         output.close()
 
     compare_analyzer_details(client1, client2, summary1['analyzers'], summary2['analyzers'], log_subdir)
+
+    # New view comparison
+    view_differences = compare_views(summary1['views'], summary2['views'])
+    write_view_differences(view_differences, log_subdir)

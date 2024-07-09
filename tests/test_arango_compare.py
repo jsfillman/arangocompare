@@ -5,7 +5,6 @@ from arango_compare.client import ArangoDBClient
 from arango_compare.comparator import compare_databases
 import os
 import tempfile
-import shutil
 import datetime
 
 class TestArangoDBClient(unittest.TestCase):
@@ -106,7 +105,8 @@ class TestArangoDBClient(unittest.TestCase):
                 'collection1': {'document_count': 100, 'index_count': 2},
                 'collection2': {'document_count': 100, 'index_count': 2},
             },
-            'analyzers': [{'name': 'analyzer1'}, {'name': 'analyzer2'}]
+            'analyzers': [{'name': 'analyzer1'}, {'name': 'analyzer2'}],
+            'views': [{'name': 'view1'}, {'name': 'view2'}]
         }
 
         summary2 = {
@@ -122,7 +122,8 @@ class TestArangoDBClient(unittest.TestCase):
                 'collection2': {'document_count': 100, 'index_count': 2},
                 'collection3': {'document_count': 100, 'index_count': 2},
             },
-            'analyzers': [{'name': 'analyzer1'}, {'name': 'analyzer3'}]
+            'analyzers': [{'name': 'analyzer1'}, {'name': 'analyzer3'}],
+            'views': [{'name': 'view1'}, {'name': 'view3'}]
         }
 
         with tempfile.TemporaryDirectory() as tmpdirname:

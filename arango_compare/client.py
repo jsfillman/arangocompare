@@ -62,11 +62,11 @@ class ArangoDBClient:
         response.raise_for_status()
         return response.json()
 
-    def get_views(self) -> int:
+    def get_views(self) -> List[Dict[str, Any]]:
         views_url = f"{self.url}/_db/{self.db_name}/_api/view"
         response = requests.get(views_url, auth=self.auth)
         response.raise_for_status()
-        return len(response.json().get('result', []))
+        return response.json().get('result', [])
 
     def get_summary(self) -> Dict[str, Any]:
         collections = self.get_collections()
@@ -84,7 +84,8 @@ class ArangoDBClient:
         total_graphs = self.get_graphs()
         analyzers = self.get_analyzers()
         total_analyzers = len(analyzers)
-        total_views = self.get_views()
+        views = self.get_views()
+        total_views = len(views)
 
         return {
             'db_name': self.db_name,
@@ -95,5 +96,6 @@ class ArangoDBClient:
             'total_analyzers': total_analyzers,
             'total_views': total_views,
             'collection_details': collection_details,
-            'analyzers': analyzers
+            'analyzers': analyzers,
+            'views': views
         }
