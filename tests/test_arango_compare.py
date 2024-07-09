@@ -100,3 +100,5 @@ class TestArangoDBClient(TestCase):
                 call("Total views                                       0                    0\n", mock.ANY),
             ]
             mock_print_and_write.assert_has_calls(calls, any_order=True)
+
+            
