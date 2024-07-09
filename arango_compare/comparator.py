@@ -59,17 +59,19 @@ def compare_databases(summary1, summary2, output_dir, db_name1, db_name2, url1, 
 
         # Analyzers Comparison
         print_and_write("# Analyzer Differences", analyzers_file)
-        for analyzer_name in sorted(set(summary1['analyzers']).union(summary2['analyzers'])):
+        analyzers1 = summary1.get('analyzers', {})
+        analyzers2 = summary2.get('analyzers', {})
+        for analyzer_name in sorted(set(analyzers1).union(analyzers2)):
             print_and_write(f"\n## Analyzer: {analyzer_name}\n", analyzers_file)
-            properties1 = summary1['analyzers'].get(analyzer_name, {}).get('properties', {})
-            properties2 = summary2['analyzers'].get(analyzer_name, {}).get('properties', {})
-            features1 = summary1['analyzers'].get(analyzer_name, {}).get('features', [])
-            features2 = summary2['analyzers'].get(analyzer_name, {}).get('features', [])
+            properties1 = analyzers1.get(analyzer_name, {}).get('properties', {})
+            properties2 = analyzers2.get(analyzer_name, {}).get('properties', {})
+            features1 = analyzers1.get(analyzer_name, {}).get('features', [])
+            features2 = analyzers2.get(analyzer_name, {}).get('features', [])
             print_and_write(f"- **properties**:\n  - DB1: {properties1}\n  - DB2: {properties2}\n", analyzers_file)
             print_and_write(f"- **features**:\n  - DB1: {features1}\n  - DB2: {features2}\n", analyzers_file)
 
             # Additional check for analyzers only in one DB
-            if analyzer_name not in summary1['analyzers']:
+            if analyzer_name not in analyzers1:
                 print_and_write(f"\n## Analyzer only in DB2: {analyzer_name}\n", analyzers_file)
-            elif analyzer_name not in summary2['analyzers']:
+            elif analyzer_name not in analyzers2:
                 print_and_write(f"\n## Analyzer only in DB1: {analyzer_name}\n", analyzers_file)
