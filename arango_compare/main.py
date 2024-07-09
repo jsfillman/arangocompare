@@ -26,7 +26,7 @@ if __name__ == "__main__":
         summary1 = client1.get_summary()
         summary2 = client2.get_summary()
 
-        # Correct the function call to pass only the required arguments
-        compare_databases(summary1, summary2, log_dir)
+        # Pass the additional environment variables for the summary text
+        compare_databases(summary1, summary2, log_dir, db1_config['db_name'], db2_config['db_name'], db1_config['url'], db2_config['url'])
     else:
         print("Development mode: Build successful")

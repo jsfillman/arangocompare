@@ -3,7 +3,7 @@ import datetime
 from typing import Dict, Any
 from .formatter import print_and_write
 
-def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_dir: str) -> None:
+def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_dir: str, db_name1: str, db_name2: str, url1: str, url2: str) -> None:
     collections1 = set(summary1['collection_details'].keys())
     collections2 = set(summary2['collection_details'].keys())
 
@@ -25,7 +25,7 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_di
     summary_output = open(summary_file, 'w')
 
     print_and_write("# Comparing collections in database on servers\n", summary_output)
-    print_and_write(f"\nComparing collections in database on servers **{summary1['db_name']}** and **{summary2['db_name']}**...\n", collections_output)
+    print_and_write(f"\nComparing collections in {db_name1} on servers **{url1}** and **{url2}**...\n", collections_output)
 
     for collection in matching_collections:
         details1 = summary1['collection_details'][collection]
@@ -53,14 +53,14 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_di
     print_and_write("\n                             Overall Feature Counts", summary_output)
     print_and_write("\n================================================================================", summary_output)
 
-    print_and_write(f"\nFeature                                         DB1                  DB2\n", summary_output)
-    print_and_write(f"--------------------------------------------------------------------------------\n", summary_output)
-    print_and_write(f"Total collections                                {summary1['total_collections']}                   {summary2['total_collections']}\n", summary_output)
-    print_and_write(f"Total documents                             {summary1['total_documents']}              {summary2['total_documents']}\n", summary_output)
-    print_and_write(f"Total indexes                                    {summary1['total_indexes']}                   {summary2['total_indexes']}\n", summary_output)
-    print_and_write(f"Total graphs                                      {summary1['total_graphs']}                    {summary2['total_graphs']}\n", summary_output)
-    print_and_write(f"Total analyzers                                  {summary1['total_analyzers']}                   {summary2['total_analyzers']}\n", summary_output)
-    print_and_write(f"Total views                                       {summary1.get('total_views', 0)}                    {summary2.get('total_views', 0)}\n", summary_output)
+    print_and_write(f"\nFeature                                         DB1                  DB2", summary_output)
+    print_and_write(f"\n--------------------------------------------------------------------------------", summary_output)
+    print_and_write(f"\nTotal collections                                {summary1['total_collections']}                   {summary2['total_collections']}", summary_output)
+    print_and_write(f"\nTotal documents                             {summary1['total_documents']}              {summary2['total_documents']}", summary_output)
+    print_and_write(f"\nTotal indexes                                    {summary1['total_indexes']}                   {summary2['total_indexes']}", summary_output)
+    print_and_write(f"\nTotal graphs                                      {summary1['total_graphs']}                    {summary2['total_graphs']}", summary_output)
+    print_and_write(f"\nTotal analyzers                                  {summary1['total_analyzers']}                   {summary2['total_analyzers']}", summary_output)
+    print_and_write(f"\nTotal views                                       {summary1.get('total_views', 0)}                    {summary2.get('total_views', 0)}", summary_output)
 
     collections_output.close()
     summary_output.close()
