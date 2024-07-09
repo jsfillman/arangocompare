@@ -83,3 +83,11 @@ def compare_databases(summary1, summary2, output_dir, db_name1, db_name2, url1, 
                 features2 = analyzers2.get(analyzer_name, {}).get('features', [])
                 print_and_write(f"  - DB1: {features1}\n", analyzers_file)
                 print_and_write(f"  - DB2: {features2}\n", analyzers_file)
+
+            # Analyze unique analyzers
+            analyzers_only_in_db1 = set(analyzers1) - set(analyzers2)
+            analyzers_only_in_db2 = set(analyzers2) - set(analyzers1)
+            for analyzer_name in analyzers_only_in_db1:
+                print_and_write(f"\n## Analyzer only in DB1: {analyzer_name}\n", analyzers_file)
+            for analyzer_name in analyzers_only_in_db2:
+                print_and_write(f"\n## Analyzer only in DB2: {analyzer_name}\n", analyzers_file)

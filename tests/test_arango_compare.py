@@ -38,7 +38,8 @@ class TestArangoDBClient(unittest.TestCase):
                 'collection3': {'document_count': 100, 'index_count': 2},
             },
             'analyzers': {
-                'text_sv': {'properties': {'locale': 'sv', 'case': 'lower', 'stopwords': [], 'accent': False, 'stemming': True}, 'features': ['frequency', 'position', 'norm']}
+                'text_sv': {'properties': {'locale': 'sv', 'case': 'lower', 'stopwords': [], 'accent': False, 'stemming': True}, 'features': ['frequency', 'position', 'norm']},
+                'text_nl': {'properties': {'locale': 'nl.utf-8', 'case': 'lower', 'stopwords': [], 'accent': False, 'stemming': True}, 'features': ['position', 'norm', 'frequency']}
             }
         }
 
@@ -120,6 +121,14 @@ class TestArangoDBClient(unittest.TestCase):
                 call("- **features**:\n", ANY),
                 call(f"  - DB1: {summary1['analyzers']['text_sv']['features']}\n", ANY),
                 call(f"  - DB2: {summary2['analyzers']['text_sv']['features']}\n", ANY),
+                call("\n## Analyzer: text_nl\n", ANY),
+                call("- **properties**:\n", ANY),
+                call(f"  - DB1: {{}}\n", ANY),
+                call(f"  - DB2: {summary2['analyzers']['text_nl']['properties']}\n", ANY),
+                call("- **features**:\n", ANY),
+                call(f"  - DB1: []\n", ANY),
+                call(f"  - DB2: {summary2['analyzers']['text_nl']['features']}\n", ANY),
+                call("\n## Analyzer only in DB2: text_nl\n", ANY)
             ]
             mock_print_and_write.assert_has_calls(analyzers_calls, any_order=True)
 
