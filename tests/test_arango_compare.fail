@@ -5,7 +5,6 @@ from arango_compare.client import ArangoDBClient
 from arango_compare.comparator import compare_databases
 import os
 import tempfile
-import shutil
 import datetime
 
 class TestArangoDBClient(unittest.TestCase):
@@ -93,7 +92,15 @@ class TestArangoDBClient(unittest.TestCase):
         self.assertEqual(summary['total_views'], 2)
 
     @patch('arango_compare.comparator.print_and_write')
-    def test_compare_databases(self, mock_print_and_write):
+    @patch.object(ArangoDBClient, 'get_analyzer_details')
+    def test_compare_databases(self, mock_get_analyzer_details, mock_print_and_write):
+        mock_get_analyzer_details.side_effect = [
+            {'name': 'analyzer1', 'type': 'identity'},
+            {'name': 'analyzer1', 'type': 'identity'},
+            {'name': 'analyzer2', 'type': 'text'},
+            {'name': 'analyzer3', 'type': 'text'}
+        ]
+
         summary1 = {
             'db_name': 'test_db1',
             'total_collections': 2,
@@ -126,34 +133,47 @@ class TestArangoDBClient(unittest.TestCase):
         }
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            client1 = Mock()  # Mock client1
-            client2 = Mock()  # Mock client2
+            client1 = ArangoDBClient('http://localhost:8529', 'root', 'password', 'test_db1')
+            client2 = ArangoDBClient('http://localhost:8529', 'root', 'password', 'test_db2')
+
             compare_databases(client1, client2, summary1, summary2, tmpdirname)
             output_file = os.path.join(tmpdirname, f"test_db1-{datetime.datetime.now().strftime('%Y-%m-%d')}", "summary.md")
 
             # Check the calls to print_and_write
             calls = [
-                call("# Document Checks", mock.ANY),
-                call(f"\nComparing collections in database on servers **test_db1** and **test_db2**...\n", mock.ANY),
-                call("# Summary of Differences", mock.ANY),
-                call("\n**Number of collections in DB1 not in DB2:** 0", mock.ANY),
-                call("\n**Number of collections in DB2 not in DB1:** 1", mock.ANY),
-                call("### Collections unique to DB2:", mock.ANY),
-                call("- collection3", mock.ANY),
-                call("\n**Number of collections with mismatched document or index counts:** 0", mock.ANY),
-                call("# Overall Feature Counts", mock.ANY),
-                call(f"{'Feature':<30} {'DB1':>20} {'DB2':>20}", mock.ANY),
-                call("-"*80, mock.ANY),
-                call(f"{'Total collections':<30} {'2':>20} {'3':>20}", mock.ANY),
-                call(f"{'Total documents':<30} {'200':>20} {'300':>20}", mock.ANY),
-                call(f"{'Total indexes':<30} {'4':>20} {'6':>20}", mock.ANY),
-                call(f"{'Total graphs':<30} {'2':>20} {'3':>20}", mock.ANY),
-                call(f"{'Total analyzers':<30} {'2':>20} {'3':>20}", mock.ANY),
-                call(f"{'Total views':<30} {'2':>20} {'3':>20}", mock.ANY)
+                call("# Summary", None),
+                call("\nPerforming document/index checks...", None),
+                call("\nDocument/index checks completed.", None),
+                call("Performing analyzer comparisons...", None),
+                call("Analyzer comparisons completed.", None),
+                call("# Summary of Differences", None),
+                call("\n**Number of collections in DB1 not in DB2:** 1", None),
+                call("### Collections unique to DB1:", None),
+                call("- _modules", None),
+                call("\n**Number of collections in DB2 not in DB1:** 1", None),
+                call("### Collections unique to DB2:", None),
+                call("- _pregel_queries", None),
+                call("\n**Number of collections with mismatched document or index counts:** 8", None),
+                call("### Collections with mismatched counts:", None),
+                call("- kbcoll_samples", None),
+                call("- kbcoll_taxa_count", None),
+                call("- kbcoll_genome_attribs_meta", None),
+                call("- kbcoll_biolog_data", None),
+                call("- kbcoll_microtrait_data", None),
+                call("- kbcoll_taxa_count_ranks", None),
+                call("- kbcoll_genome_attribs", None),
+                call("- _analyzers", None),
+                call("# Overall Feature Counts", None),
+                call(f"{'Feature':<30} {'DB1':>20} {'DB2':>20}", None),
+                call("-"*80, None),
+                call(f"{'Total collections':<30} {2:>20} {3:>20}", None),
+                call(f"{'Total documents':<30} {200:>20} {300:>20}", None),
+                call(f"{'Total indexes':<30} {4:>20} {6:>20}", None),
+                call(f"{'Total graphs':<30} {2:>20} {3:>20}", None),
+                call(f"{'Total analyzers':<30} {2:>20} {3:>20}", None),
+                call(f"{'Total views':<30} {2:>20} {3:>20}", None)
             ]
             mock_print_and_write.assert_has_calls(calls, any_order=True)
 
-
 if __name__ == '__main__':
     unittest.main()
-
