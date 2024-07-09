@@ -71,3 +71,4 @@ class ArangoDBClient:
             'total_graphs': graphs,
             'total_analyzers': analyzers
         }
+
