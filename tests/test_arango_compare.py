@@ -86,14 +86,14 @@ class TestArangoDBClient(TestCase):
 
             # Check the calls to print_and_write
             calls = [
-                call("# Comparing collections in database on servers\n", mock.ANY),
-                call(f"\nComparing collections in {db_name1} on servers **{url1}** and **{url2}**...\n", mock.ANY),
-                call("\n================================================================================", mock.ANY),
+                call("# Comparing collections in database on servers", mock.ANY),
+                call(f"\nComparing collections in {db_name1} on servers **{url1}** and **{url2}**...", mock.ANY),
+                call("================================================================================", mock.ANY),
                 call("\n                             Summary of Differences", mock.ANY),
-                call("\n================================================================================\n", mock.ANY),
-                call(f"Number of collections in DB1 not in DB2: {1}\n", mock.ANY),
-                call(f"Number of collections in DB2 not in DB1: {1}\n", mock.ANY),
-                call(f"Number of collections with mismatched document or index counts: {0}\n", mock.ANY),
+                call("\n================================================================================", mock.ANY),
+                call(f"\nNumber of collections in DB1 not in DB2: {1}", mock.ANY),
+                call(f"Number of collections in DB2 not in DB1: {1}", mock.ANY),
+                call(f"Number of collections with mismatched document or index counts: {0}", mock.ANY),
                 call("================================================================================", mock.ANY),
                 call("\n                             Overall Feature Counts", mock.ANY),
                 call("================================================================================", mock.ANY),
@@ -107,3 +107,4 @@ class TestArangoDBClient(TestCase):
                 call(f"Total views                                       {summary1.get('total_views', 0)}                    {summary2.get('total_views', 0)}", mock.ANY)
             ]
             mock_print_and_write.assert_has_calls(calls, any_order=True)
+

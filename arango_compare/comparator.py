@@ -24,8 +24,8 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_di
     collections_output = open(collections_file, 'w')
     summary_output = open(summary_file, 'w')
 
-    print_and_write("# Comparing collections in database on servers\n", summary_output)
-    print_and_write(f"\nComparing collections in {db_name1} on servers **{url1}** and **{url2}**...\n", collections_output)
+    print_and_write("# Comparing collections in database on servers", summary_output)
+    print_and_write(f"\nComparing collections in {db_name1} on servers **{url1}** and **{url2}**...", collections_output)
 
     for collection in matching_collections:
         details1 = summary1['collection_details'][collection]
@@ -36,18 +36,18 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_di
             print_and_write(f"  Server1 - Document count: {details1['document_count']}, Index count: {details1['index_count']}", collections_output)
             print_and_write(f"  Server2 - Document count: {details2['document_count']}, Index count: {details2['index_count']}", collections_output)
 
-    print_and_write("\n================================================================================", summary_output)
+    print_and_write("================================================================================", summary_output)
     print_and_write("\n                             Summary of Differences", summary_output)
-    print_and_write("\n================================================================================\n", summary_output)
+    print_and_write("\n================================================================================", summary_output)
 
-    print_and_write(f"Number of collections in DB1 not in DB2: {len(unique_to_db1)}\n", summary_output)
-    print_and_write(f"Number of collections in DB2 not in DB1: {len(unique_to_db2)}\n", summary_output)
-    print_and_write(f"Number of collections with mismatched document or index counts: {len(mismatched_collections)}\n", summary_output)
+    print_and_write(f"\nNumber of collections in DB1 not in DB2: {len(unique_to_db1)}", summary_output)
+    print_and_write(f"Number of collections in DB2 not in DB1: {len(unique_to_db2)}", summary_output)
+    print_and_write(f"Number of collections with mismatched document or index counts: {len(mismatched_collections)}", summary_output)
 
     if mismatched_collections:
-        print_and_write("\n### Collections with mismatched counts:\n", summary_output)
+        print_and_write("\n### Collections with mismatched counts:", summary_output)
         for collection in mismatched_collections:
-            print_and_write(f" {collection}\n", summary_output)
+            print_and_write(f" {collection}", summary_output)
 
     print_and_write("================================================================================", summary_output)
     print_and_write("\n                             Overall Feature Counts", summary_output)
