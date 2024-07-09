@@ -77,7 +77,6 @@ class TestArangoDBClient(TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             compare_databases(summary1, summary2, tmpdirname)
-            output_file = os.path.join(tmpdirname, f"test_db1-{datetime.datetime.now().strftime('%Y-%m-%d')}", "summary.md")
 
             # Check the calls to print_and_write
             calls = [
