@@ -67,16 +67,19 @@ def compare_databases(summary1, summary2, output_dir, db_name1, db_name2, url1, 
         print_and_write(f"Total views                                       {summary1.get('total_views', 0)}                    {summary2.get('total_views', 0)}\n", summary_file)
 
         # Analyzers Comparison
-        print_and_write("# Analyzer Differences", analyzers_file)
-        for analyzer_name in sorted(set(summary1['analyzers']).union(summary2['analyzers'])):
-            print_and_write(f"\n## Analyzer: {analyzer_name}\n", analyzers_file)
-            print_and_write("- **properties**:\n", analyzers_file)
-            properties1 = summary1['analyzers'].get(analyzer_name, {}).get('properties', {})
-            properties2 = summary2['analyzers'].get(analyzer_name, {}).get('properties', {})
-            print_and_write(f"  - DB1: {properties1}\n", analyzers_file)
-            print_and_write(f"  - DB2: {properties2}\n", analyzers_file)
-            print_and_write("- **features**:\n", analyzers_file)
-            features1 = summary1['analyzers'].get(analyzer_name, {}).get('features', [])
-            features2 = summary2['analyzers'].get(analyzer_name, {}).get('features', [])
-            print_and_write(f"  - DB1: {features1}\n", analyzers_file)
-            print_and_write(f"  - DB2: {features2}\n", analyzers_file)
+        if 'analyzers' in summary1 or 'analyzers' in summary2:
+            print_and_write("# Analyzer Differences", analyzers_file)
+            analyzers1 = summary1.get('analyzers', {})
+            analyzers2 = summary2.get('analyzers', {})
+            for analyzer_name in sorted(set(analyzers1).union(analyzers2)):
+                print_and_write(f"\n## Analyzer: {analyzer_name}\n", analyzers_file)
+                print_and_write("- **properties**:\n", analyzers_file)
+                properties1 = analyzers1.get(analyzer_name, {}).get('properties', {})
+                properties2 = analyzers2.get(analyzer_name, {}).get('properties', {})
+                print_and_write(f"  - DB1: {properties1}\n", analyzers_file)
+                print_and_write(f"  - DB2: {properties2}\n", analyzers_file)
+                print_and_write("- **features**:\n", analyzers_file)
+                features1 = analyzers1.get(analyzer_name, {}).get('features', [])
+                features2 = analyzers2.get(analyzer_name, {}).get('features', [])
+                print_and_write(f"  - DB1: {features1}\n", analyzers_file)
+                print_and_write(f"  - DB2: {features2}\n", analyzers_file)
