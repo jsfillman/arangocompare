@@ -3,7 +3,36 @@ import datetime
 from typing import Dict, Any
 from .formatter import print_and_write
 
-def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_dir: str) -> None:
+def compare_analyzer_details(client1, client2, analyzers1, analyzers2, log_subdir):
+    analyzers1_dict = {analyzer['name']: analyzer for analyzer in analyzers1}
+    analyzers2_dict = {analyzer['name']: analyzer for analyzer in analyzers2}
+
+    analyzer_diff_file = os.path.join(log_subdir, "analyzers.md")
+    with open(analyzer_diff_file, 'w') as output:
+        print_and_write("# Analyzer Differences", output)
+
+        for analyzer_name in analyzers1_dict:
+            if analyzer_name in analyzers2_dict:
+                analyzer1 = analyzers1_dict[analyzer_name]
+                analyzer2 = analyzers2_dict[analyzer_name]
+
+                differences = []
+                for key in analyzer1:
+                    if key in analyzer2 and analyzer1[key] != analyzer2[key]:
+                        differences.append((key, analyzer1[key], analyzer2[key]))
+
+                if differences:
+                    print_and_write(f"\n## Analyzer: {analyzer_name}", output)
+                    for key, value1, value2 in differences:
+                        print_and_write(f"- **{key}**:\n  - DB1: {value1}\n  - DB2: {value2}", output)
+            else:
+                print_and_write(f"\n## Analyzer only in DB1: {analyzer_name}", output)
+
+        for analyzer_name in analyzers2_dict:
+            if analyzer_name not in analyzers1_dict:
+                print_and_write(f"\n## Analyzer only in DB2: {analyzer_name}", output)
+
+def compare_databases(client1, client2, summary1: Dict[str, Any], summary2: Dict[str, Any], log_dir: str) -> None:
     collections1 = set(summary1['collection_details'].keys())
     collections2 = set(summary2['collection_details'].keys())
 
@@ -65,3 +94,5 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_di
 
     if output:
         output.close()
+
+    compare_analyzer_details(client1, client2, summary1['analyzers'], summary2['analyzers'], log_subdir)

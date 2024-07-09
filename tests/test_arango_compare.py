@@ -105,7 +105,8 @@ class TestArangoDBClient(unittest.TestCase):
             'collection_details': {
                 'collection1': {'document_count': 100, 'index_count': 2},
                 'collection2': {'document_count': 100, 'index_count': 2},
-            }
+            },
+            'analyzers': [{'name': 'analyzer1'}, {'name': 'analyzer2'}]
         }
 
         summary2 = {
@@ -120,11 +121,14 @@ class TestArangoDBClient(unittest.TestCase):
                 'collection1': {'document_count': 100, 'index_count': 2},
                 'collection2': {'document_count': 100, 'index_count': 2},
                 'collection3': {'document_count': 100, 'index_count': 2},
-            }
+            },
+            'analyzers': [{'name': 'analyzer1'}, {'name': 'analyzer3'}]
         }
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            compare_databases(summary1, summary2, tmpdirname)
+            client1 = Mock()  # Mock client1
+            client2 = Mock()  # Mock client2
+            compare_databases(client1, client2, summary1, summary2, tmpdirname)
             output_file = os.path.join(tmpdirname, f"test_db1-{datetime.datetime.now().strftime('%Y-%m-%d')}", "summary.md")
 
             # Check the calls to print_and_write

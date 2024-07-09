@@ -50,11 +50,17 @@ class ArangoDBClient:
         response.raise_for_status()
         return len(response.json().get('graphs', []))
 
-    def get_analyzers(self) -> int:
+    def get_analyzers(self) -> List[Dict[str, Any]]:
         analyzers_url = f"{self.url}/_db/{self.db_name}/_api/analyzer"
         response = requests.get(analyzers_url, auth=self.auth)
         response.raise_for_status()
-        return len(response.json().get('result', []))
+        return response.json().get('result', [])
+
+    def get_analyzer_details(self, analyzer_name: str) -> Dict[str, Any]:
+        analyzer_url = f"{self.url}/_db/{self.db_name}/_api/analyzer/{analyzer_name}"
+        response = requests.get(analyzer_url, auth=self.auth)
+        response.raise_for_status()
+        return response.json()
 
     def get_views(self) -> int:
         views_url = f"{self.url}/_db/{self.db_name}/_api/view"
@@ -76,7 +82,8 @@ class ArangoDBClient:
             collection_details[collection['name']] = details
 
         total_graphs = self.get_graphs()
-        total_analyzers = self.get_analyzers()
+        analyzers = self.get_analyzers()
+        total_analyzers = len(analyzers)
         total_views = self.get_views()
 
         return {
@@ -87,5 +94,6 @@ class ArangoDBClient:
             'total_graphs': total_graphs,
             'total_analyzers': total_analyzers,
             'total_views': total_views,
-            'collection_details': collection_details
+            'collection_details': collection_details,
+            'analyzers': analyzers
         }
