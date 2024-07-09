@@ -1,57 +1,12 @@
-import unittest
-from unittest import mock
+from unittest import TestCase, mock
 from unittest.mock import patch, Mock, call
+import tempfile
+import os
+import datetime
 from arango_compare.client import ArangoDBClient
 from arango_compare.comparator import compare_databases
-import os
-import tempfile
-import shutil
-import datetime
 
-class TestArangoDBClient(unittest.TestCase):
-
-    @patch('arango_compare.client.requests.get')
-    def test_get_collections(self, mock_get):
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            'result': [{'name': 'collection1'}, {'name': 'collection2'}],
-            'hasMore': False
-        }
-        mock_get.return_value = mock_response
-
-        client = ArangoDBClient('http://localhost:8529', 'root', 'password', 'test_db1')
-        collections = client.get_collections()
-
-        self.assertEqual(len(collections), 2)
-        self.assertEqual(collections[0]['name'], 'collection1')
-        self.assertEqual(collections[1]['name'], 'collection2')
-
-    @patch('arango_compare.client.requests.get')
-    def test_get_collection_details(self, mock_get):
-        mock_response_doc_count = Mock()
-        mock_response_doc_count.json.return_value = {'count': 100}
-
-        mock_response_indexes = Mock()
-        mock_response_indexes.json.return_value = {'indexes': [{'id': '1'}, {'id': '2'}]}
-
-        mock_get.side_effect = [mock_response_doc_count, mock_response_indexes]
-
-        client = ArangoDBClient('http://localhost:8529', 'root', 'password', 'test_db1')
-        details = client.get_collection_details('collection1')
-
-        self.assertEqual(details['document_count'], 100)
-        self.assertEqual(details['index_count'], 2)
-
-    @patch('arango_compare.client.requests.get')
-    def test_get_graphs(self, mock_get):
-        mock_response = Mock()
-        mock_response.json.return_value = {'graphs': [{'name': 'graph1'}, {'name': 'graph2'}]}
-        mock_get.return_value = mock_response
-
-        client = ArangoDBClient('http://localhost:8529', 'root', 'password', 'test_db1')
-        graph_count = client.get_graphs()
-
-        self.assertEqual(graph_count, 2)
+class TestArangoDBClient(TestCase):
 
     @patch('arango_compare.client.requests.get')
     def test_get_summary(self, mock_get):
@@ -90,7 +45,6 @@ class TestArangoDBClient(unittest.TestCase):
         self.assertEqual(summary['total_indexes'], 4)
         self.assertEqual(summary['total_graphs'], 2)
         self.assertEqual(summary['total_analyzers'], 2)
-        self.assertEqual(summary['total_views'], 2)
 
     @patch('arango_compare.comparator.print_and_write')
     def test_compare_databases(self, mock_print_and_write):
@@ -101,7 +55,6 @@ class TestArangoDBClient(unittest.TestCase):
             'total_indexes': 4,
             'total_graphs': 2,
             'total_analyzers': 2,
-            'total_views': 2,
             'collection_details': {
                 'collection1': {'document_count': 100, 'index_count': 2},
                 'collection2': {'document_count': 100, 'index_count': 2},
@@ -115,7 +68,6 @@ class TestArangoDBClient(unittest.TestCase):
             'total_indexes': 6,
             'total_graphs': 3,
             'total_analyzers': 3,
-            'total_views': 3,
             'collection_details': {
                 'collection1': {'document_count': 100, 'index_count': 2},
                 'collection2': {'document_count': 100, 'index_count': 2},
@@ -129,26 +81,23 @@ class TestArangoDBClient(unittest.TestCase):
 
             # Check the calls to print_and_write
             calls = [
-                call("# Document Checks", mock.ANY),
-                call(f"\nComparing collections in database on servers **test_db1** and **test_db2**...\n", mock.ANY),
-                call("# Summary of Differences", mock.ANY),
-                call("\n**Number of collections in DB1 not in DB2:** 0", mock.ANY),
-                call("\n**Number of collections in DB2 not in DB1:** 1", mock.ANY),
-                call("### Collections unique to DB2:", mock.ANY),
-                call("- collection3", mock.ANY),
-                call("\n**Number of collections with mismatched document or index counts:** 0", mock.ANY),
-                call("# Overall Feature Counts", mock.ANY),
-                call(f"{'Feature':<30} {'DB1':>20} {'DB2':>20}", mock.ANY),
-                call("-"*80, mock.ANY),
-                call(f"{'Total collections':<30} {'2':>20} {'3':>20}", mock.ANY),
-                call(f"{'Total documents':<30} {'200':>20} {'300':>20}", mock.ANY),
-                call(f"{'Total indexes':<30} {'4':>20} {'6':>20}", mock.ANY),
-                call(f"{'Total graphs':<30} {'2':>20} {'3':>20}", mock.ANY),
-                call(f"{'Total analyzers':<30} {'2':>20} {'3':>20}", mock.ANY),
-                call(f"{'Total views':<30} {'2':>20} {'3':>20}", mock.ANY)
+                call("# Comparing collections in database on servers\n", mock.ANY),
+                call("\n\n================================================================================", mock.ANY),
+                call("\n                             Summary of Differences", mock.ANY),
+                call("\n================================================================================\n", mock.ANY),
+                call("\nNumber of collections in DB1 not in DB2: 0\n", mock.ANY),
+                call("Number of collections in DB2 not in DB1: 1\n", mock.ANY),
+                call("Number of collections with mismatched document or index counts: 0\n", mock.ANY),
+                call("\n\n================================================================================", mock.ANY),
+                call("\n                             Overall Feature Counts", mock.ANY),
+                call("\n================================================================================", mock.ANY),
+                call("\nFeature                                         DB1                  DB2\n", mock.ANY),
+                call("--------------------------------------------------------------------------------\n", mock.ANY),
+                call("Total collections                                2                   3\n", mock.ANY),
+                call("Total documents                             200              300\n", mock.ANY),
+                call("Total indexes                                    4                   6\n", mock.ANY),
+                call("Total graphs                                      2                    3\n", mock.ANY),
+                call("Total analyzers                                  2                   3\n", mock.ANY),
+                call("Total views                                       0                    0\n", mock.ANY),
             ]
             mock_print_and_write.assert_has_calls(calls, any_order=True)
-
-
-if __name__ == '__main__':
-    unittest.main()

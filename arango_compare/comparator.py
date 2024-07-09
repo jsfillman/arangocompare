@@ -17,51 +17,51 @@ def compare_databases(summary1: Dict[str, Any], summary2: Dict[str, Any], log_di
     date_str = datetime.datetime.now().strftime('%Y-%m-%d')
     log_subdir = os.path.join(log_dir, f"{db_name}-{date_str}")
     os.makedirs(log_subdir, exist_ok=True)
-    output_file = os.path.join(log_subdir, "summary.md")
 
-    output = open(output_file, 'w') if output_file else None
+    collections_file = os.path.join(log_subdir, "collections.md")
+    summary_file = os.path.join(log_subdir, "summary.md")
 
-    print_and_write("# Document Checks", output)
-    print_and_write(f"\nComparing collections in database on servers **{summary1['db_name']}** and **{summary2['db_name']}**...\n", output)
+    collections_output = open(collections_file, 'w')
+    summary_output = open(summary_file, 'w')
+
+    print_and_write("# Comparing collections in database on servers\n", summary_output)
+    print_and_write(f"\nComparing collections in database on servers **{summary1['db_name']}** and **{summary2['db_name']}**...\n", collections_output)
 
     for collection in matching_collections:
         details1 = summary1['collection_details'][collection]
         details2 = summary2['collection_details'][collection]
         if details1['document_count'] != details2['document_count'] or details1['index_count'] != details2['index_count']:
             mismatched_collections.append(collection)
-            print_and_write(f"\nCollection name: {collection}", output)
-            print_and_write(f"  Server1 - Document count: {details1['document_count']}, Index count: {details1['index_count']}", output)
-            print_and_write(f"  Server2 - Document count: {details2['document_count']}, Index count: {details2['index_count']}", output)
+            print_and_write(f"\nCollection name: {collection}", collections_output)
+            print_and_write(f"  Server1 - Document count: {details1['document_count']}, Index count: {details1['index_count']}", collections_output)
+            print_and_write(f"  Server2 - Document count: {details2['document_count']}, Index count: {details2['index_count']}", collections_output)
 
-    print_and_write("# Summary of Differences", output)
+    print_and_write("\n\n================================================================================", summary_output)
+    print_and_write("\n                             Summary of Differences", summary_output)
+    print_and_write("\n================================================================================\n", summary_output)
 
-    print_and_write(f"\n**Number of collections in DB1 not in DB2:** {len(unique_to_db1)}", output)
-    if unique_to_db1:
-        print_and_write("### Collections unique to DB1:", output)
-        for collection in unique_to_db1:
-            print_and_write(f"- {collection}", output)
+    print_and_write(f"\nNumber of collections in DB1 not in DB2: {len(unique_to_db1)}\n", summary_output)
+    print_and_write(f"Number of collections in DB2 not in DB1: {len(unique_to_db2)}\n", summary_output)
+    print_and_write(f"Number of collections with mismatched document or index counts: {len(mismatched_collections)}\n", summary_output)
 
-    print_and_write(f"\n**Number of collections in DB2 not in DB1:** {len(unique_to_db2)}", output)
-    if unique_to_db2:
-        print_and_write("### Collections unique to DB2:", output)
-        for collection in unique_to_db2:
-            print_and_write(f"- {collection}", output)
-
-    print_and_write(f"\n**Number of collections with mismatched document or index counts:** {len(mismatched_collections)}", output)
     if mismatched_collections:
-        print_and_write("### Collections with mismatched counts:", output)
+        print_and_write("### Collections with mismatched counts:\n", summary_output)
         for collection in mismatched_collections:
-            print_and_write(f"- {collection}", output)
+            print_and_write(f" {collection}", summary_output)
 
-    print_and_write("# Overall Feature Counts", output)
-    print_and_write(f"{'Feature':<30} {'DB1':>20} {'DB2':>20}", output)
-    print_and_write("-"*80, output)
-    print_and_write(f"{'Total collections':<30} {summary1['total_collections']:>20} {summary2['total_collections']:>20}", output)
-    print_and_write(f"{'Total documents':<30} {summary1['total_documents']:>20} {summary2['total_documents']:>20}", output)
-    print_and_write(f"{'Total indexes':<30} {summary1['total_indexes']:>20} {summary2['total_indexes']:>20}", output)
-    print_and_write(f"{'Total graphs':<30} {summary1['total_graphs']:>20} {summary2['total_graphs']:>20}", output)
-    print_and_write(f"{'Total analyzers':<30} {summary1['total_analyzers']:>20} {summary2['total_analyzers']:>20}", output)
-    print_and_write(f"{'Total views':<30} {summary1['total_views']:>20} {summary2['total_views']:>20}", output)
+    print_and_write("\n\n================================================================================", summary_output)
+    print_and_write("\n                             Overall Feature Counts", summary_output)
+    print_and_write("\n================================================================================", summary_output)
 
-    if output:
-        output.close()
+    print_and_write(f"\nFeature                                         DB1                  DB2\n", summary_output)
+    print_and_write(f"--------------------------------------------------------------------------------\n", summary_output)
+    print_and_write(f"Total collections                                {summary1['total_collections']}                   {summary2['total_collections']}\n", summary_output)
+    print_and_write(f"Total documents                             {summary1['total_documents']}              {summary2['total_documents']}\n", summary_output)
+    print_and_write(f"Total indexes                                    {summary1['total_indexes']}                   {summary2['total_indexes']}\n", summary_output)
+    print_and_write(f"Total graphs                                      {summary1['total_graphs']}                    {summary2['total_graphs']}\n", summary_output)
+    print_and_write(f"Total analyzers                                  {summary1['total_analyzers']}                   {summary2['total_analyzers']}\n", summary_output)
+    print_and_write(f"Total views                                       {summary1.get('total_views', 0)}                    {summary2.get('total_views', 0)}\n", summary_output)
+
+    collections_output.close()
+    summary_output.close()
+
