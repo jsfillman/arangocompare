@@ -1,36 +1,58 @@
 import os
 import datetime
 from typing import Dict, Any
-from .formatter import print_and_write
+from .formatter import print_and_write, write_view_differences
 
-def compare_analyzer_details(client1, client2, analyzers1, analyzers2, log_subdir):
-    analyzers1_dict = {analyzer['name']: analyzer for analyzer in analyzers1}
-    analyzers2_dict = {analyzer['name']: analyzer for analyzer in analyzers2}
+# Compares entities from two databases, identifying unique and differing entities, and generates a markdown report detailing these differences.
 
-    analyzer_diff_file = os.path.join(log_subdir, "analyzers.md")
-    with open(analyzer_diff_file, 'w') as output:
-        print_and_write("# Analyzer Differences", output)
+def compare_entities(entity1_list, entity2_list, entity_name, log_subdir):
+    entity1_dict = {entity['name']: entity for entity in entity1_list}
+    entity2_dict = {entity['name']: entity for entity in entity2_list}
+    unique_to_db1 = []
+    unique_to_db2 = []
+    differences_exist = False
 
-        for analyzer_name in analyzers1_dict:
-            if analyzer_name in analyzers2_dict:
-                analyzer1 = analyzers1_dict[analyzer_name]
-                analyzer2 = analyzers2_dict[analyzer_name]
+    diff_file = os.path.join(log_subdir, f"{entity_name}.md")
+    with open(diff_file, 'w') as output:
+        print_and_write(f"# {entity_name.capitalize()} Differences", output)
 
-                differences = []
-                for key in analyzer1:
-                    if key in analyzer2 and analyzer1[key] != analyzer2[key]:
-                        differences.append((key, analyzer1[key], analyzer2[key]))
-
-                if differences:
-                    print_and_write(f"\n## Analyzer: {analyzer_name}", output)
-                    for key, value1, value2 in differences:
-                        print_and_write(f"- **{key}**:\n  - DB1: {value1}\n  - DB2: {value2}", output)
+        for name in entity1_dict:
+            if name not in entity2_dict:
+                unique_to_db1.append(name)
             else:
-                print_and_write(f"\n## Analyzer only in DB1: {analyzer_name}", output)
+                differences = []
+                for key in entity1_dict[name]:
+                    if key in entity2_dict[name] and entity1_dict[name][key] != entity2_dict[name][key]:
+                        differences.append((key, entity1_dict[name][key], entity2_dict[name][key]))
+                        differences_exist = True
 
-        for analyzer_name in analyzers2_dict:
-            if analyzer_name not in analyzers1_dict:
-                print_and_write(f"\n## Analyzer only in DB2: {analyzer_name}", output)
+        for name in entity2_dict:
+            if name not in entity1_dict:
+                unique_to_db2.append(name)
+
+        if unique_to_db1:
+            print_and_write(f"\n## {entity_name.capitalize()} only in DB1:", output)
+            for name in unique_to_db1:
+                print_and_write(f"- {name}", output)
+
+        if unique_to_db2:
+            print_and_write(f"\n## {entity_name.capitalize()} only in DB2:", output)
+            for name in unique_to_db2:
+                print_and_write(f"- {name}", output)
+
+        if differences_exist:
+            print_and_write("\n## Difference Details", output)
+            for name in entity1_dict:
+                if name in entity2_dict:
+                    differences = []
+                    for key in entity1_dict[name]:
+                        if key in entity2_dict[name] and entity1_dict[name][key] != entity2_dict[name][key]:
+                            differences.append((key, entity1_dict[name][key], entity2_dict[name][key]))
+
+                    if differences:
+                        print_and_write(f"\n### {entity_name.capitalize()}: {name}", output)
+                        for key, value1, value2 in differences:
+                            print_and_write(f"- **{key}**:\n  - DB1: {value1}\n  - DB2: {value2}", output)
 
 def compare_databases(client1, client2, summary1: Dict[str, Any], summary2: Dict[str, Any], log_dir: str) -> None:
     collections1 = set(summary1['collection_details'].keys())
@@ -43,12 +65,17 @@ def compare_databases(client1, client2, summary1: Dict[str, Any], summary2: Dict
     mismatched_collections = []
 
     db_name = summary1['db_name']
-    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    date_str = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
     log_subdir = os.path.join(log_dir, f"{db_name}-{date_str}")
     os.makedirs(log_subdir, exist_ok=True)
     output_file = os.path.join(log_subdir, "summary.md")
 
     output = open(output_file, 'w') if output_file else None
+
+    compare_entities(summary1['analyzers'], summary2['analyzers'], 'analyzers', log_subdir)
+    compare_entities(summary1['graphs'], summary2['graphs'], 'graphs', log_subdir)
+    compare_entities(summary1['views'], summary2['views'], 'views', log_subdir)
+    # compare_entities(summary1['indexes'], summary2['indexes'], 'indexes', log_subdir)
 
     print_and_write("# Document Checks", output)
     print_and_write(f"\nComparing collections in database on servers **{summary1['db_name']}** and **{summary2['db_name']}**...\n", output)
@@ -95,4 +122,4 @@ def compare_databases(client1, client2, summary1: Dict[str, Any], summary2: Dict
     if output:
         output.close()
 
-    compare_analyzer_details(client1, client2, summary1['analyzers'], summary2['analyzers'], log_subdir)
+

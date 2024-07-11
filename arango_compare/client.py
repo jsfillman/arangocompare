@@ -44,11 +44,6 @@ class ArangoDBClient:
             'index_count': index_count
         }
 
-    def get_graphs(self) -> int:
-        graphs_url = f"{self.url}/_db/{self.db_name}/_api/gharial"
-        response = requests.get(graphs_url, auth=self.auth)
-        response.raise_for_status()
-        return len(response.json().get('graphs', []))
 
     def get_analyzers(self) -> List[Dict[str, Any]]:
         analyzers_url = f"{self.url}/_db/{self.db_name}/_api/analyzer"
@@ -56,17 +51,46 @@ class ArangoDBClient:
         response.raise_for_status()
         return response.json().get('result', [])
 
-    def get_analyzer_details(self, analyzer_name: str) -> Dict[str, Any]:
-        analyzer_url = f"{self.url}/_db/{self.db_name}/_api/analyzer/{analyzer_name}"
-        response = requests.get(analyzer_url, auth=self.auth)
+    def get_graphs(self) -> List[Dict[str, Any]]:
+        graphs_url = f"{self.url}/_db/{self.db_name}/_api/gharial"
+        response = requests.get(graphs_url, auth=self.auth)
         response.raise_for_status()
-        return response.json()
+        graphs_data = response.json().get('graphs', [])
+        graph_details = []
+        for graph in graphs_data:
+            detail = {
+                'name': graph['name'],
+                'edge_definitions': graph['edgeDefinitions'],
+                'orphan_collections': graph['orphanCollections']
+            }
+            graph_details.append(detail)
+        return graph_details
 
-    def get_views(self) -> int:
+    # def get_indexes(self) -> List[Dict[str, Any]]:
+    #     all_indexes = []
+    #     collections = self.get_collections()
+    #     for collection in collections:
+    #         collection_name = collection['name']
+    #         indexes_url = f"{self.url}/_db/{self.db_name}/_api/index?collection={collection_name}"
+    #         response = requests.get(indexes_url, auth=self.auth)
+    #         response.raise_for_status()
+    #         indexes_data = response.json().get('indexes', [])
+    #         for index in indexes_data:
+    #             index_detail = {
+    #                 'id': index['id'],
+    #                 'type': index['type'],
+    #                 'fields': index.get('fields', []),
+    #                 'collection': collection_name
+    #             }
+    #             all_indexes.append(index_detail)
+    #     return all_indexes
+
+    def get_views(self) -> List[Dict[str, Any]]:
         views_url = f"{self.url}/_db/{self.db_name}/_api/view"
         response = requests.get(views_url, auth=self.auth)
         response.raise_for_status()
-        return len(response.json().get('result', []))
+        return response.json().get('result', [])
+
 
     def get_summary(self) -> Dict[str, Any]:
         collections = self.get_collections()
@@ -81,19 +105,58 @@ class ArangoDBClient:
             total_indexes += details['index_count']
             collection_details[collection['name']] = details
 
-        total_graphs = self.get_graphs()
+        graphs = self.get_graphs()  # Updated to use the new get_graphs method
+        total_graphs = len(graphs)
         analyzers = self.get_analyzers()
         total_analyzers = len(analyzers)
-        total_views = self.get_views()
+        views = self.get_views()
+        total_views = len(views)
+        # indexes = self.get_indexes()
 
         return {
             'db_name': self.db_name,
             'total_collections': total_collections,
             'total_documents': total_documents,
             'total_indexes': total_indexes,
-            'total_graphs': total_graphs,
+            'total_graphs': total_graphs,  # This now represents the number of graphs, not their details
             'total_analyzers': total_analyzers,
             'total_views': total_views,
             'collection_details': collection_details,
-            'analyzers': analyzers
+            'graphs': graphs,  # Graph details are now included here
+            'analyzers': analyzers,
+            'views': views
         }
+
+    # def get_summary(self) -> Dict[str, Any]:
+    #     collections = self.get_collections()
+    #     total_collections = len(collections)
+    #     total_documents = 0
+    #     total_indexes = 0
+    #     collection_details = {}
+    #
+    #     for collection in collections:
+    #         details = self.get_collection_details(collection['name'])
+    #         total_documents += details['document_count']
+    #         total_indexes += details['index_count']
+    #         collection_details[collection['name']] = details
+    #
+    #     total_graphs = self.get_graphs()
+    #     analyzers = self.get_analyzers()
+    #     total_analyzers = len(analyzers)
+    #     views = self.get_views()
+    #     total_views = len(views)
+    #
+    #     return {
+    #         'db_name': self.db_name,
+    #         'total_collections': total_collections,
+    #         'total_documents': total_documents,
+    #         'total_indexes': total_indexes,
+    #         'total_graphs': total_graphs,
+    #         'total_analyzers': total_analyzers,
+    #         'total_views': total_views,
+    #         'collection_details': collection_details,
+    #         'analyzers': analyzers,
+    #         'views': views
+    #     }
+
+
