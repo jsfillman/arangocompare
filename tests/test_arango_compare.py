@@ -1,114 +1,149 @@
-import datetime
+import unittest
+from unittest.mock import patch, MagicMock
 import os
-import tempfile
-from unittest import TestCase
-from unittest.mock import Mock, patch
-from arango_compare.client import ArangoDBClient
-from arango_compare.comparator import compare_databases
+import sys
+import json
 
-class TestArangoDBClient(TestCase):
+# Adjust the path to include the parent directory where the modules are located
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'arango_compare')))
 
-    @patch('arango_compare.client.requests.get')
-    def test_get_graphs(self, mock_get):
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            'graphs': [
-                {'name': 'graph1', 'edgeDefinitions': [], 'orphanCollections': []},
-                {'name': 'graph2', 'edgeDefinitions': [], 'orphanCollections': []}
-            ]
+from client import ArangoDBClient
+from formatter import Formatter
+from comparator import Comparator
+from main import write_discrepancies_to_md
+
+class TestArangoCompare(unittest.TestCase):
+
+    @patch('client.requests.get')
+    def test_get_all_entities(self, mock_get):
+        # Mocking collection and index responses
+        mock_collections_response = MagicMock()
+        mock_collections_response.json.return_value = {
+            'result': [{'name': 'collection1', 'count': 1, 'status': 'loaded'}]
         }
-        mock_get.return_value = mock_response
-
-        client = ArangoDBClient('http://localhost:8529', 'root', 'password', 'test_db1')
-        graph_count = client.get_graphs()
-
-        self.assertEqual(len(graph_count), 2)
-        self.assertEqual(graph_count[0]['name'], 'graph1')
-        self.assertEqual(graph_count[1]['name'], 'graph2')
-
-    @patch('arango_compare.client.requests.get')
-    def test_get_summary(self, mock_get):
-        mock_response_collections = Mock()
-        mock_response_collections.json.return_value = {
-            'result': [{'name': 'collection1'}, {'name': 'collection2'}],
-            'hasMore': False
+        mock_indexes_response = MagicMock()
+        mock_indexes_response.json.return_value = {
+            'indexes': [{'id': 'index1', 'type': 'hash', 'fields': ['field1'], 'unique': True, 'sparse': False}]
         }
 
-        mock_response_doc_count = Mock()
-        mock_response_doc_count.json.return_value = {'count': 100}
+        mock_get.side_effect = [mock_collections_response, mock_indexes_response]
 
-        mock_response_indexes = Mock()
-        mock_response_indexes.json.return_value = {'indexes': [{'id': '1'}, {'id': '2'}]}
+        client = ArangoDBClient('http://example.com', 'test_db')
+        entities = client.get_all_entities()
 
-        mock_response_graphs = Mock()
-        mock_response_graphs.json.return_value = {
-            'graphs': [
-                {'name': 'graph1', 'edgeDefinitions': [], 'orphanCollections': []},
-                {'name': 'graph2', 'edgeDefinitions': [], 'orphanCollections': []}
-            ]
+        expected_entities = {
+            'collections': [{'name': 'collection1', 'count': 1, 'status': 'loaded'}],
+            'indexes': {
+                'collection1': [{'id': 'index1', 'type': 'hash', 'fields': ['field1'], 'unique': True, 'sparse': False}]
+            }
         }
 
-        mock_response_analyzers = Mock()
-        mock_response_analyzers.json.return_value = {'result': [{'name': 'analyzer1'}, {'name': 'analyzer2'}]}
+        self.assertEqual(entities, expected_entities)
 
-        mock_response_views = Mock()
-        mock_response_views.json.return_value = {'result': [{'name': 'view1'}, {'name': 'view2'}]}
+    def test_format_entities(self):
+        formatter = Formatter()
+        entities = {
+            'collections': [{'name': 'collection1', 'count': 1, 'status': 'loaded'}],
+            'indexes': {
+                'collection1': [{'id': 'index1', 'type': 'hash', 'fields': ['field1'], 'unique': True, 'sparse': False}]
+            }
+        }
 
-        mock_get.side_effect = [
-            mock_response_collections, mock_response_doc_count, mock_response_indexes,
-            mock_response_doc_count, mock_response_indexes, mock_response_graphs,
-            mock_response_analyzers, mock_response_views
-        ]
-
-        client = ArangoDBClient('http://localhost:8529', 'root', 'password', 'test_db1')
-        summary = client.get_summary()
-
-        self.assertEqual(summary['total_collections'], 2)
-        self.assertEqual(summary['total_documents'], 200)
-        self.assertEqual(summary['total_indexes'], 4)
-        self.assertEqual(summary['total_graphs'], 2)
-        self.assertEqual(summary['total_analyzers'], 2)
-        self.assertEqual(summary['total_views'], 2)
-
-    @patch('arango_compare.comparator.print_and_write')
-    def test_compare_databases(self, mock_print_and_write):
-        summary1 = {
-            'db_name': 'test_db1',
-            'total_collections': 2,
-            'total_documents': 200,
-            'total_indexes': 4,
-            'total_graphs': 2,
-            'total_analyzers': 2,
-            'total_views': 2,
-            'collection_details': {
-                'collection1': {'document_count': 100, 'index_count': 2},
-                'collection2': {'document_count': 100, 'index_count': 2},
+        formatted_entities = formatter.format_entities(entities)
+        expected_formatted_entities = {
+            'collections': {
+                'collection1': {'count': 1, 'status': 'loaded'}
             },
-            'analyzers': [{'name': 'analyzer1'}, {'name': 'analyzer2'}],
-            'graphs': [{'name': 'graph1'}, {'name': 'graph2'}],
-            'views': [{'name': 'view1'}, {'name': 'view2'}]
+            'indexes': {
+                'collection1': {
+                    'index1': {'type': 'hash', 'fields': ['field1'], 'unique': True, 'sparse': False}
+                }
+            }
         }
 
-        summary2 = {
-            'db_name': 'test_db2',
-            'total_collections': 3,
-            'total_documents': 300,
-            'total_indexes': 6,
-            'total_graphs': 3,
-            'total_analyzers': 3,
-            'total_views': 3,
-            'collection_details': {
-                'collection1': {'document_count': 100, 'index_count': 2},
-                'collection2': {'document_count': 100, 'index_count': 2},
-                'collection3': {'document_count': 100, 'index_count': 2},
+        self.assertEqual(formatted_entities, expected_formatted_entities)
+
+    def test_compare_entities(self):
+        comparator = Comparator()
+        source_entities = {
+            'collections': {
+                'collection1': {'count': 1, 'status': 'loaded'}
             },
-            'analyzers': [{'name': 'analyzer1'}, {'name': 'analyzer3'}],
-            'graphs': [{'name': 'graph1'}, {'name': 'graph3'}],
-            'views': [{'name': 'view1'}, {'name': 'view3'}]
+            'indexes': {
+                'collection1': {
+                    'index1': {'type': 'hash', 'fields': ['field1'], 'unique': True, 'sparse': False}
+                }
+            }
+        }
+        target_entities = {
+            'collections': {
+                'collection1': {'count': 1, 'status': 'unloaded'}
+            },
+            'indexes': {
+                'collection1': {
+                    'index1': {'type': 'hash', 'fields': ['field1'], 'unique': False, 'sparse': False}
+                }
+            }
         }
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            client1 = Mock()  # Mock client1
-            client2 = Mock()  # Mock client2
-            compare_databases(client1, client2, summary1, summary2, tmpdirname)
+        discrepancies = comparator.compare_entities(source_entities, target_entities)
+        expected_discrepancies = {
+            'collections': {
+                'collection1': {
+                    'source': {'count': 1, 'status': 'loaded'},
+                    'target': {'count': 1, 'status': 'unloaded'}
+                }
+            },
+            'indexes': {
+                'collection1': {
+                    'index1': {
+                        'source': {'type': 'hash', 'fields': ['field1'], 'unique': True, 'sparse': False},
+                        'target': {'type': 'hash', 'fields': ['field1'], 'unique': False, 'sparse': False}
+                    }
+                }
+            }
+        }
 
+        self.assertEqual(discrepancies, expected_discrepancies)
+
+    def test_write_discrepancies_to_md(self):
+        discrepancies = {
+            'collections': {
+                'collection1': {
+                    'source': {'count': 1, 'status': 'loaded'},
+                    'target': {'count': 1, 'status': 'unloaded'}
+                }
+            },
+            'indexes': {
+                'collection1': {
+                    'index1': {
+                        'source': {'type': 'hash', 'fields': ['field1'], 'unique': True, 'sparse': False},
+                        'target': {'type': 'hash', 'fields': ['field1'], 'unique': False, 'sparse': False}
+                    }
+                }
+            }
+        }
+
+        output_dir = 'test_output'
+        write_discrepancies_to_md(discrepancies, output_dir)
+
+        collections_md_path = os.path.join(output_dir, "collection_discrepancies.md")
+        indexes_md_path = os.path.join(output_dir, "index_discrepancies.md")
+
+        with open(collections_md_path, 'r') as collections_md_file:
+            collections_content = collections_md_file.read()
+            self.assertIn("Collection Discrepancies", collections_content)
+            self.assertIn(json.dumps(discrepancies['collections'], indent=2), collections_content)
+
+        with open(indexes_md_path, 'r') as indexes_md_file:
+            indexes_content = indexes_md_file.read()
+            self.assertIn("Index Discrepancies", indexes_content)
+            self.assertIn(json.dumps(discrepancies['indexes'], indent=2), indexes_content)
+
+        # Clean up
+        os.remove(collections_md_path)
+        os.remove(indexes_md_path)
+        os.rmdir(output_dir)
+
+if __name__ == '__main__':
+    unittest.main()
