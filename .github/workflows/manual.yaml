@@ -4,26 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       platforms:
-        description: 'Comma-separated list of platforms for which the Docker image should be built. Defaults to linux/amd64,linux/arm64/v8.'
+        description: 'Array of platforms for which the Docker image should be built.'
         required: false
-        default: 'linux/amd64'
+        default: '[ "linux/amd64", "linux/arm64/v8" ]' # Default as JSON array
 
 jobs:
   build-push:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: ['linux/amd64', 'linux/arm64/v8']  # Default platforms
-        include:
-          # You can add specific conditions to include/exclude based on the input
-          - platform: linux/amd64
-            condition: ${{ contains(github.event.inputs.platforms, 'linux/amd64') }}
-          - platform: linux/arm64
-            condition: ${{ contains(github.event.inputs.platforms, 'linux/arm64') }}
-          - platform: linux/arm64/v8
-            condition: ${{ contains(github.event.inputs.platforms, 'linux/arm64/v8') }}
-          - platform: linux/riscv64
-            condition: ${{ contains(github.event.inputs.platforms, 'linux/riscv64') }}
+        platform: ${{ fromJson(inputs.platforms) }}  # Directly use the JSON array from the input
     steps:
       - name: Check out GitHub Repo
         uses: actions/checkout@v4
