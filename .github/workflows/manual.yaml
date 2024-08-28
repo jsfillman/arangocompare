@@ -18,8 +18,12 @@ jobs:
           # You can add specific conditions to include/exclude based on the input
           - platform: linux/amd64
             condition: ${{ contains(github.event.inputs.platforms, 'linux/amd64') }}
+          - platform: linux/arm64
+            condition: ${{ contains(github.event.inputs.platforms, 'linux/arm64') }}
           - platform: linux/arm64/v8
             condition: ${{ contains(github.event.inputs.platforms, 'linux/arm64/v8') }}
+          - platform: linux/riscv64
+            condition: ${{ contains(github.event.inputs.platforms, 'linux/riscv64') }}
     steps:
       - name: Check out GitHub Repo
         uses: actions/checkout@v4
