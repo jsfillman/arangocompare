@@ -6,7 +6,7 @@ on:
       platforms:
         description: 'Comma-separated list of platforms for which the Docker image should be built. Defaults to linux/amd64,linux/arm64/v8.'
         required: false
-        default: 'linux/amd64,linux/arm64/v8'
+        default: 'linux/amd64'
 
 jobs:
   build-push:
