@@ -11,6 +11,9 @@ on:
 jobs:
   build-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ${{ fromJson(inputs.platforms) }}
     steps:
       - name: Check out GitHub Repo
         uses: actions/checkout@v4
@@ -52,7 +55,7 @@ jobs:
           file: ./Dockerfile
           pull: true
           push: true
-          platforms: ${{ github.event.inputs.platforms }}
+          platforms: ${{ matrix.platform }}
           build-args: |
             BUILD_DATE=${{ steps.date.outputs.date }}
             VCS_REF=${{ github.sha }}
