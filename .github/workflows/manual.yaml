@@ -35,6 +35,10 @@ jobs:
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
 
+      - name: Normalize platform name
+        id: normalize-platform
+        run: echo "PLATFORM_NAME=${{ matrix.platform//\//- }}" >> $GITHUB_ENV
+
       - name: Build and push for each platform
         uses: docker/build-push-action@v6
         with:
@@ -43,7 +47,7 @@ jobs:
           pull: true
           push: true
           platforms: ${{ matrix.platform }}
-          tags: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-develop:${{ github.ref_name }}-${{ matrix.platform }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-develop:${{ github.ref_name }}-${{ env.PLATFORM_NAME }}
           build-args: |
             BUILD_DATE=${{ steps.date.outputs.date }}
             VCS_REF=${{ github.sha }}
@@ -64,7 +68,7 @@ jobs:
       - name: Create and push multi-platform manifest
         run: |
           docker manifest create ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-develop:${{ github.ref_name }} \
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-develop:${{ github.ref_name }}-linux/amd64 \
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-develop:${{ github.ref_name }}-linux/arm64/v8
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-develop:${{ github.ref_name }}-linux-amd64 \
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-develop:${{ github.ref_name }}-linux-arm64-v8
 
           docker manifest push ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-develop:${{ github.ref_name }}
