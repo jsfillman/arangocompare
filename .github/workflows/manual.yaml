@@ -46,8 +46,10 @@ jobs:
 
       - name: Export digest
         run: |
+          mkdir -p $(dirname digest-${{ matrix.platform }}.txt)
           echo "${{ steps.build.outputs.digest }}" > digest-${{ matrix.platform }}.txt
         shell: bash
+
 
       - name: Upload digest
         uses: actions/upload-artifact@v3
