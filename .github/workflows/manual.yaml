@@ -50,11 +50,10 @@ jobs:
           echo "${{ steps.build.outputs.digest }}" > digest-${{ matrix.platform }}.txt
         shell: bash
 
-
       - name: Upload digest
         uses: actions/upload-artifact@v3
         with:
-          name: digest-${{ matrix.platform }}
+          name: digest-${{ matrix.platform // '/' / '_' }}
           path: digest-${{ matrix.platform }}.txt
 
   merge:
