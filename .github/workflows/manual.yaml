@@ -4,20 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       platforms:
-        description: 'Array of platforms for which the Docker image should be built.'
+        description: 'The platforms for which the Docker image should be built. If not specified, defaults to linux/amd64,linux/arm64/v8.'
         required: false
-        default: '[ "linux/amd64", "linux/arm64/v8" ]' # Default as JSON array
-
-env:
-  REGISTRY_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-develop
+        default: 'linux/amd64,linux/arm64/v8'
 
 jobs:
-  build:
+  build-push:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        platform: ${{ fromJson(inputs.platforms) }}
+        platform: ${{ fromJson(inputs.platforms) }}  # Directly use the JSON array from the input
     steps:
       - name: Check out GitHub Repo
         uses: actions/checkout@v4
@@ -35,14 +31,33 @@ jobs:
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Build and push by digest
-        id: build
+      - name: Create GitHub action tags from image tags
+        id: tags
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            const tags = ['br-${{ github.ref_name }}', 'latest'];
+            const username = '${{ github.repository_owner }}';
+            const repoName = '${{ github.event.repository.name }}-develop';
+            return tags.map((tag) => {
+              return `ghcr.io/${username}/${repoName}:${tag}`;
+            }).join(',');
+
+      - name: Build and push
         uses: docker/build-push-action@v3
         with:
           context: .
           file: ./Dockerfile
+          pull: true
+          push: true
           platforms: ${{ matrix.platform }}
-          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true
+          build-args: |
+            BUILD_DATE=${{ steps.date.outputs.date }}
+            VCS_REF=${{ github.sha }}
+            BRANCH='${{ github.ref }}'
+            TAG='${{ github.ref }}'
+          tags: ${{ steps.tags.outputs.result }}
 
       - name: Export digest
         run: |
@@ -53,7 +68,7 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v3
         with:
-          name: digest-${{ matrix.platform // '/' / '_' }}
+          name: ${{ 'digest-' + matrix.platform.replace(/\//g, '_') }}
           path: digest-${{ matrix.platform }}.txt
 
   merge:
