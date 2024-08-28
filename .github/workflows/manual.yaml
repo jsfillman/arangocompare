@@ -16,7 +16,7 @@ jobs:
         platform: ${{ fromJson(inputs.platforms) }}  # Directly use the JSON array from the input
     steps:
       - name: Check out GitHub Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -37,7 +37,7 @@ jobs:
 
       - name: Create GitHub action tags from image tags
         id: tags
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
