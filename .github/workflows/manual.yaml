@@ -11,9 +11,6 @@ on:
 jobs:
   build-push:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: ${{ fromJson(inputs.platforms) }}  # Directly use the JSON array from the input
     steps:
       - name: Check out GitHub Repo
         uses: actions/checkout@v4
@@ -48,14 +45,14 @@ jobs:
               return `ghcr.io/${username}/${repoName}:${tag}`;
             }).join(',');
 
-      - name: Build and push
+      - name: Build and push multi-platform image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           pull: true
           push: true
-          platforms: ${{ matrix.platform }}
+          platforms: ${{ fromJson(inputs.platforms) }}  # Use the platforms array directly
           build-args: |
             BUILD_DATE=${{ steps.date.outputs.date }}
             VCS_REF=${{ github.sha }}
