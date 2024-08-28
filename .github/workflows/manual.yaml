@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: ${{ fromJson(inputs.platforms) }}
+        platform: ${{ fromJson('["' + inputs.platforms.replace(',', '","') + '"]') }}
     steps:
       - name: Check out GitHub Repo
         uses: actions/checkout@v4
